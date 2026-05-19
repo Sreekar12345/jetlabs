@@ -1,5 +1,5 @@
 export { AUTH_LOGIN_PATH, SESSION_MAX_AGE_SECONDS, getAuthSecret } from "./config";
-export { authOptions } from "./options";
+export { getAuthOptions } from "./options";
 export { hashPassword, verifyPassword } from "./password";
 export {
   getAuthSession,

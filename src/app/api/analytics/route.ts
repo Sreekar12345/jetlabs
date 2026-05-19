@@ -2,6 +2,9 @@ import { apiError, apiSuccess } from "@/lib/api/response";
 import { AuthError, getSessionUserRole, requireRole } from "@/lib/auth/session";
 import { getBatchAnalyticsForViewer } from "@/services/dashboard-service";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function GET() {
   try {
     const session = await requireRole("FACULTY", "ADMIN");

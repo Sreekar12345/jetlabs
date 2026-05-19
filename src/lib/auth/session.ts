@@ -1,8 +1,9 @@
+import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import type { Session as NextAuthSession } from "next-auth";
 import { AUTH_LOGIN_PATH } from "@/lib/auth/config";
-import { authOptions } from "@/lib/auth/options";
+import { getAuthOptions } from "@/lib/auth/options";
 import { getDefaultDashboardPath } from "@/lib/auth/routing";
 import type { UserRole } from "@/types/auth";
 
@@ -30,7 +31,8 @@ function hasRequiredRole(role: UserRole, roles: UserRole[]) {
 }
 
 export async function getAuthSession() {
-  return getServerSession(authOptions);
+  await headers();
+  return getServerSession(getAuthOptions());
 }
 
 export async function getSession() {

@@ -34,7 +34,9 @@ export function getAuthSecret() {
   }
 
   if (process.env.NODE_ENV === "production") {
-    throw new Error("AUTH_SECRET or NEXTAUTH_SECRET must be configured in production.");
+    throw new Error(
+      "AUTH_SECRET, NEXTAUTH_SECRET, or JWT_SECRET must be configured in production.",
+    );
   }
 
   return DEFAULT_AUTH_SECRET;
