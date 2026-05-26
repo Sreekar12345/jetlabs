@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Syntra AOIP",
+  title: "JetLabs | Academic Innovation Platform",
   description:
-    "Academic Operating System for research workflow, execution tracking, reviews, submissions, and evaluation lifecycle.",
+    "Build, manage, and scale student innovation projects, mentorship, collaboration, submissions, and incubation workflows in one platform.",
 };
 
 export default function RootLayout({
