@@ -1,8 +1,8 @@
 import {
-  BookOpenCheck,
-  Building2,
-  GraduationCap,
+  FileText,
+  Rocket,
   ShieldCheck,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -16,16 +16,16 @@ export type AuthHeroStatItem = AuthHeroStat & {
   icon: LucideIcon;
 };
 
-export const SYNTRA_BRAND_NAME = "Syntra";
-export const SYNTRA_SUPPORT_EMAIL = "helpdesk@syntra.app";
-export const SYNTRA_FORGOT_PASSWORD_HREF = `mailto:${SYNTRA_SUPPORT_EMAIL}?subject=Syntra%20password%20reset`;
-export const SYNTRA_ACCESS_REQUEST_HREF = `mailto:${SYNTRA_SUPPORT_EMAIL}?subject=Syntra%20faculty%20access%20request`;
+export const SYNTRA_BRAND_NAME = "JetLabs";
+export const SYNTRA_SUPPORT_EMAIL = "helpdesk@jetlabs.app";
+export const SYNTRA_FORGOT_PASSWORD_HREF = `mailto:${SYNTRA_SUPPORT_EMAIL}?subject=JetLabs%20password%20reset`;
+export const SYNTRA_ACCESS_REQUEST_HREF = `mailto:${SYNTRA_SUPPORT_EMAIL}?subject=JetLabs%20faculty%20access%20request`;
 
 export const AUTH_HERO_CONTENT = {
   badge: "Academic Innovation Platform",
-  title: "Move every campus idea from proposal to published outcome.",
+  title: "Run real projects.\nPublish real research.",
   description:
-    "Syntra unifies student execution, faculty review cycles, and research readiness in one secure workflow layer for modern institutions.",
+    "The structured execution OS for engineering innovation cells. Track projects, research publications, faculty reviews, milestones, and team progress in one place.",
   footer:
     "Institution-based authentication, role-aware dashboards, and audit-friendly review histories built for higher education teams.",
 };
@@ -55,7 +55,7 @@ export const LOGIN_ROLE_CONTENT: Record<LoginRole, AuthRoleContent> = {
     description:
       "Open your project workspace, research logs, and mentor feedback with your institution-issued login.",
     emailPlaceholder: "you@college.edu",
-    passwordPlaceholder: "Enter your Syntra password",
+    passwordPlaceholder: "Enter your JetLabs password",
     accessNote:
       "Student onboarding supports institution-approved self-service sign-up and invitation-based activation.",
   },
@@ -72,22 +72,22 @@ export const LOGIN_ROLE_CONTENT: Record<LoginRole, AuthRoleContent> = {
 
 export const AUTH_HERO_STATS: AuthHeroStatItem[] = [
   {
-    icon: GraduationCap,
-    value: "240+",
-    label: "Active capstone teams",
-    description: "Students aligned around validated milestones, review loops, and deliverable deadlines.",
+    icon: Rocket,
+    value: "250+",
+    label: "Active Projects",
+    description: " ",
   },
   {
-    icon: BookOpenCheck,
-    value: "92%",
-    label: "Weekly milestone completion",
-    description: "Operational visibility that helps mentors intervene before project work stalls.",
+    icon: FileText,
+    value: "128+",
+    label: "Research Papers",
+    description: " ",
   },
   {
-    icon: Building2,
-    value: "18",
-    label: "Departments onboarded",
-    description: "One institution-ready platform for innovation cells, labs, and faculty-led programs.",
+    icon: Users,
+    value: "42+",
+    label: "Innovation Teams",
+    description: " ",
   },
 ];
 

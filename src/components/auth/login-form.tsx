@@ -243,7 +243,7 @@ export function LoginForm({ callbackUrl, reason }: LoginFormProps) {
               {roleContent.eyebrow}
             </p>
             <h1 id="login-title" className="text-balance text-3xl">
-              Sign in to your execution workspace
+              Sign in to your JetLabs workspace
             </h1>
             <p className="text-sm leading-7 text-muted-foreground sm:text-base">
               {roleContent.description}
@@ -397,7 +397,7 @@ export function LoginForm({ callbackUrl, reason }: LoginFormProps) {
 
             <div className="space-y-3 text-center">
               <p className="text-sm text-muted-foreground">
-                New to Syntra?{" "}
+                New to JetLabs?{" "}
                 <Link
                   className="font-medium text-foreground underline decoration-white/20 underline-offset-4 transition-colors hover:text-muted-foreground"
                   href="/auth/signup"
