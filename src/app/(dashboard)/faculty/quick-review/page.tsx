@@ -1,6 +1,13 @@
-import { ModulePage } from "@/components/dashboard/module-page";
-import { facultyModules } from "@/data/dashboard-modules";
+import { SubmissionTriageCenter } from "@/components/dashboard/submission-triage-center";
+import { requirePageSession } from "@/lib/auth/session";
+import { getReviewQueueData } from "@/lib/services/review-service";
 
-export default function Page() {
-  return <ModulePage module={facultyModules["quick-review"]} />;
+export default async function Page() {
+  const session = await requirePageSession();
+  const data = await getReviewQueueData({
+    role: session.user.role,
+    userId: session.user.id,
+  });
+
+  return <SubmissionTriageCenter initialData={data} />;
 }

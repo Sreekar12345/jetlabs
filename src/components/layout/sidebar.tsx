@@ -1,18 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Orbit } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
+import { LogOut, Orbit } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   getNavigationForRole,
   isNavigationItemActive,
+  ROLE_LABELS,
 } from "@/lib/navigation";
+import { signOutFromSession } from "@/services/auth-service";
 import { useUIStore } from "@/store/ui-store";
-import type { AppShellUser } from "@/types/aoip";
+import type { AppShellUser, NavigationItem } from "@/types/aoip";
 
 type SidebarProps = {
   user: AppShellUser;
@@ -23,112 +26,170 @@ type SidebarPanelProps = SidebarProps & {
   onNavigate?: () => void;
 };
 
+const STUDENT_NAV_ORDER = [
+  "Dashboard",
+  "Problem Market",
+  "Weekly Submissions",
+  "IEEE Paper",
+  "Final Submission",
+  "Execution Playbook",
+  "Viva",
+  "Achievements",
+  "Performance Score",
+  "Profile",
+];
+
+const STUDENT_NAV_LABELS: Record<string, string> = {
+  "Problem Market": "Problem Marketplace",
+  "Execution Playbook": "Execution Playbooks",
+  Viva: "Viva Readiness",
+  Profile: "My Profile",
+};
+
+function getInitials(value: string) {
+  return value
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function getSidebarItems(user: AppShellUser): NavigationItem[] {
+  const items = getNavigationForRole(user.role).flatMap((section) => section.items);
+
+  if (user.role !== "STUDENT") {
+    return items;
+  }
+
+  return STUDENT_NAV_ORDER.map((title) => {
+    const item = items.find((candidate) => candidate.title === title);
+
+    if (!item) {
+      return null;
+    }
+
+    return {
+      ...item,
+      title: STUDENT_NAV_LABELS[item.title] ?? item.title,
+    };
+  }).filter((item): item is NavigationItem => item !== null);
+}
+
 function SidebarPanel({ user, collapsed, onNavigate }: SidebarPanelProps) {
   const pathname = usePathname();
-  const sections = getNavigationForRole(user.role);
+  const router = useRouter();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const items = getSidebarItems(user);
+  const displayName = user.name?.trim() || user.email;
+  const profileLine =
+    user.role === "STUDENT" ? "CSE · Year 4" : `${ROLE_LABELS[user.role]} workspace`;
+
+  async function handleSignOut() {
+    if (isSigningOut) {
+      return;
+    }
+
+    setIsSigningOut(true);
+    const result = await signOutFromSession();
+
+    if (!result.success) {
+      setIsSigningOut(false);
+      toast.error(result.message);
+      return;
+    }
+
+    router.replace("/auth/login");
+  }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/95 backdrop-blur-xl">
+    <div className="flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-[#f8fafc]">
       <div
         className={cn(
-          "flex h-20 items-center gap-4 border-b border-sidebar-border px-6",
+          "flex h-[72px] items-center gap-3 border-b border-sidebar-border px-5",
           collapsed && "justify-center px-0",
         )}
       >
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-foreground">
-          <Orbit className="size-5" />
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Orbit className="size-4" />
         </div>
         {!collapsed ? (
           <div className="min-w-0">
-            <p className="text-sm font-semibold tracking-[0.18em] text-foreground">
-              SYNTRA
-            </p>
-            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-              AOIP
-            </p>
+            <p className="truncate text-sm font-semibold text-foreground">Syntra</p>
+            <p className="truncate text-xs text-muted-foreground">Academic OS</p>
           </div>
         ) : null}
       </div>
 
-      <div className="scrollbar-subtle flex-1 overflow-y-auto px-4 py-5">
-        <nav className="space-y-6">
-          {sections.map((section) => (
-            <div key={section.label} className="space-y-2">
-              {!collapsed ? (
-                <p className="px-3 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                  {section.label}
-                </p>
-              ) : null}
+      <div className="scrollbar-subtle flex-1 overflow-y-auto px-3 py-5">
+        <nav className="space-y-1.5">
+          {items.map((item) => {
+            const active = isNavigationItemActive(pathname, item.href);
+            const Icon = item.icon;
 
-              <div className="space-y-1.5">
-                {section.items.map((item) => {
-                  const active = isNavigationItemActive(pathname, item.href);
-                  const Icon = item.icon;
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      title={item.title}
-                      onClick={onNavigate}
-                      className={cn(
-                        "group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 transition duration-200",
-                        active
-                          ? "border-border bg-card text-foreground shadow-[0_14px_34px_rgba(0,0,0,0.24)]"
-                          : "text-muted-foreground hover:border-border/70 hover:bg-accent hover:text-foreground",
-                        collapsed && "justify-center px-0",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "flex size-10 shrink-0 items-center justify-center rounded-2xl border transition",
-                          active
-                            ? "border-border bg-muted text-foreground"
-                            : "border-transparent bg-transparent text-muted-foreground group-hover:border-border/70 group-hover:bg-muted group-hover:text-foreground",
-                        )}
-                      >
-                        <Icon className="size-4" />
-                      </span>
-
-                      {!collapsed ? (
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium">
-                            {item.title}
-                          </span>
-                          <span className="mt-1 block truncate text-xs text-muted-foreground">
-                            {item.description}
-                          </span>
-                        </span>
-                      ) : null}
-
-                      {!collapsed && item.badge ? (
-                        <Badge variant={active ? "default" : "outline"}>{item.badge}</Badge>
-                      ) : null}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.title}
+                onClick={onNavigate}
+                className={cn(
+                  "group flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium transition duration-200",
+                  active
+                    ? "bg-white text-foreground shadow-[0_8px_24px_rgba(15,23,42,0.06)] ring-1 ring-border"
+                    : "text-muted-foreground hover:bg-white hover:text-foreground",
+                  collapsed && "justify-center px-0",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "size-3.5 shrink-0",
+                    active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+                  )}
+                />
+                {!collapsed ? (
+                  <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                ) : null}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
-      <div className={cn("border-t border-sidebar-border p-4", collapsed && "px-3")}>
-        {!collapsed ? (
-          <div className="rounded-2xl border border-border bg-card px-4 py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-foreground">Execution cycle</p>
-                <p className="mt-1 text-xs text-muted-foreground">Week 9 review window active</p>
+      <div className={cn("border-t border-sidebar-border p-3", collapsed && "px-2")}>
+        <div
+          className={cn(
+            "flex items-center gap-3 rounded-xl border border-border bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)]",
+            collapsed && "justify-center border-transparent p-0",
+          )}
+        >
+          <Avatar className="size-9 border border-border">
+            <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
+              {getInitials(displayName)}
+            </AvatarFallback>
+          </Avatar>
+          {!collapsed ? (
+            <>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {displayName}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">{profileLine}</p>
               </div>
-              <Badge variant="secondary">Live</Badge>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <Badge variant="secondary">Live</Badge>
-          </div>
-        )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+                aria-label="Sign out"
+              >
+                <LogOut className="size-4" />
+              </Button>
+            </>
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -149,40 +210,29 @@ export function Sidebar({ user }: SidebarProps) {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 hidden lg:block",
-          sidebarCollapsed ? "w-24" : "w-72",
+          sidebarCollapsed ? "w-[88px]" : "w-[260px]",
         )}
       >
         <SidebarPanel user={user} collapsed={sidebarCollapsed} />
       </aside>
 
-      <AnimatePresence>
-        {sidebarOpen ? (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <motion.button
-              type="button"
-              aria-label="Close sidebar"
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSidebarOpen(false)}
+      {sidebarOpen ? (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button
+            type="button"
+            aria-label="Close sidebar"
+            className="absolute inset-0 bg-black/20"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <div className="relative z-10 h-full w-[86vw] max-w-80 bg-[#f8fafc]">
+            <SidebarPanel
+              user={user}
+              collapsed={false}
+              onNavigate={() => setSidebarOpen(false)}
             />
-            <motion.div
-              initial={{ x: -28, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -28, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="relative z-10 h-full w-[86vw] max-w-80"
-            >
-              <SidebarPanel
-                user={user}
-                collapsed={false}
-                onNavigate={() => setSidebarOpen(false)}
-              />
-            </motion.div>
           </div>
-        ) : null}
-      </AnimatePresence>
+        </div>
+      ) : null}
     </>
   );
 }

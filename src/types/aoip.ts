@@ -215,19 +215,76 @@ export type ProjectHealthTeam = {
   id: string;
   team: string;
   project: string;
+  problemStatement: string;
+  batch: string;
   mentor: string;
   completion: number;
+  healthScore: number;
   riskScore: number;
+  priorityScore: number;
+  riskLayer:
+    | "Healthy"
+    | "Stable"
+    | "Slipping"
+    | "At Risk"
+    | "Critical"
+    | "Ghost Team"
+    | "Fake Progress"
+    | "Research Blocked"
+    | "Mentor Dependent";
+  trend:
+    | "Improving rapidly"
+    | "Declining slowly"
+    | "Stagnating"
+    | "Recovering after revision"
+    | "High volatility"
+    | "Consistent execution";
+  momentum: string;
+  aiLabel: string;
+  sprintStatus: string;
+  deliveryRiskState: string;
+  completionConfidence: number;
+  paperCompletionConfidence: number;
+  vivaReadinessConfidence: number;
+  technicalExecutionConfidence: number;
+  mentorLoad: string;
+  interventionUrgency: "Monitor" | "Review" | "High" | "Immediate";
+  currentMilestone: string;
+  deadlineLabel: string;
   backlogItems: number;
   inactiveDays: number;
   missedSubmissions: number;
   velocity: string;
   alerts: string[];
   contributionHeatmap: number[];
+  detectedSignals: string[];
+  qualitySignals: Array<{
+    label: string;
+    value: number;
+    detail: string;
+  }>;
+  executionTimeline: Array<{
+    label: string;
+    sprintReliability: number;
+    submissionReliability: number;
+    reviewTurnaround: number;
+    paperVelocity: number;
+    deploymentStability: number;
+  }>;
 };
 
 export type ProjectHealthData = {
   stats: DashboardStat[];
+  executionPulse: {
+    score: number;
+    state: string;
+    summary: string;
+  };
+  riskDistribution: Array<{
+    label: ProjectHealthTeam["riskLayer"];
+    count: number;
+  }>;
+  aiSummary: string;
   velocitySeries: Array<{
     sprint: string;
     planned: number;
@@ -240,6 +297,198 @@ export type ProjectHealthData = {
   }>;
   alerts: ActivityFeedItem[];
   teams: ProjectHealthTeam[];
+};
+
+export type ExecutionOwnershipMember = {
+  id: string;
+  name: string;
+  role: string;
+  aiLabel:
+    | "Execution Lead"
+    | "Stable Contributor"
+    | "Research Heavy"
+    | "Silent Contributor"
+    | "Support Role"
+    | "At Risk"
+    | "Disconnected"
+    | "Free Rider"
+    | "Burnout Risk";
+  riskState: "Low" | "Watch" | "High" | "Critical";
+  ownership: number;
+  technicalContribution: number;
+  researchContribution: number;
+  sprintParticipation: number;
+  documentationOwnership: number;
+  reliability: number;
+  ownershipConsistency: number;
+  deadlineDiscipline: number;
+  collaborationQuality: number;
+  reviewResponsiveness: number;
+  lastActiveLabel: string;
+  insights: string[];
+  anomalies: string[];
+  dependencySignals: string[];
+  trustSignals: Array<{
+    label: string;
+    value: number;
+  }>;
+  weeklyTrend: number[];
+  ownershipAreas: Array<{
+    label: string;
+    value: number;
+  }>;
+};
+
+export type ExecutionOwnershipTeam = {
+  id: string;
+  team: string;
+  project: string;
+  batch: string;
+  mentor: string;
+  balanceScore: number;
+  dependencyScore: number;
+  collaborationHealth: string;
+  aiDiagnosis: string;
+  riskState: "Healthy" | "Watch" | "Imbalanced" | "Critical";
+  priorityScore: number;
+  dominantMember: string;
+  dynamics: string[];
+  forecasts: Array<{
+    label: string;
+    value: number;
+    detail: string;
+  }>;
+  interventions: string[];
+  members: ExecutionOwnershipMember[];
+};
+
+export type TeamContributionData = {
+  stats: DashboardStat[];
+  aiSummary: string;
+  teams: ExecutionOwnershipTeam[];
+  alerts: ActivityFeedItem[];
+};
+
+export type DefenseReadinessMember = {
+  id: string;
+  name: string;
+  role: string;
+  readinessLabel:
+    | "Defense Lead"
+    | "Technically Ready"
+    | "Research Ready"
+    | "Slide Memorizer"
+    | "Architecture Gap"
+    | "Questioning Risk"
+    | "Fake Ready";
+  riskState: "Low" | "Watch" | "High" | "Critical";
+  architectureExplanation: number;
+  researchAnswering: number;
+  liveDebugging: number;
+  implementationExplanation: number;
+  decisionDefense: number;
+  datasetModelDefense: number;
+  scalabilityAnswering: number;
+  confidenceUnderPressure: number;
+  aiSignals: string[];
+  stressPatterns: string[];
+};
+
+export type DefenseArtifact = {
+  id: string;
+  label: string;
+  type: "PPT" | "Demo" | "Paper" | "Architecture";
+  uploadCompleteness: number;
+  reviewStatus: string;
+  facultyVerification: number;
+  aiQualityScan: number;
+  technicalDepthValidation: number;
+  presentationReadiness: number;
+  missingSections: string[];
+  intelligence: string;
+};
+
+export type DefenseCompetency = {
+  label: string;
+  value: number;
+  detail: string;
+};
+
+export type MockVivaQuestion = {
+  id: string;
+  category:
+    | "Technical"
+    | "Research"
+    | "Architecture"
+    | "Deployment"
+    | "Dataset"
+    | "Scalability"
+    | "Failure handling";
+  pressure: "Warm-up" | "Panel-level" | "Stress test";
+  question: string;
+  expectedEvidence: string;
+  weakSignal: string;
+};
+
+export type DefenseReadinessTeam = {
+  id: string;
+  team: string;
+  project: string;
+  batch: string;
+  mentor: string;
+  readinessScore: number;
+  confidenceScore: number;
+  technicalDepthScore: number;
+  researchMaturityScore: number;
+  communicationReadiness: number;
+  architectureUnderstanding: number;
+  externalVivaConfidence: number;
+  failureProbability: number;
+  technicalRejectionProbability: number;
+  communicationBreakdownRisk: number;
+  researchQuestioningSurvival: number;
+  improvementVelocity: string;
+  trend: "Improving" | "Stable" | "Volatile" | "Declining";
+  readinessState:
+    | "Defense Ready"
+    | "Recoverable"
+    | "Vulnerable"
+    | "Fake Ready"
+    | "High Risk";
+  aiDiagnosis: string;
+  riskDetections: string[];
+  highRiskQuestioningAreas: string[];
+  competencies: DefenseCompetency[];
+  artifacts: DefenseArtifact[];
+  members: DefenseReadinessMember[];
+  mockQuestions: MockVivaQuestion[];
+  stressAnalysis: Array<{
+    label: string;
+    value: number;
+    detail: string;
+  }>;
+  timeline: Array<{
+    label: string;
+    readiness: number;
+    technicalConfidence: number;
+    researchMaturity: number;
+    pressureHandling: number;
+  }>;
+  actions: string[];
+};
+
+export type DefenseReadinessData = {
+  stats: DashboardStat[];
+  aiSummary: string;
+  portfolio: {
+    overallReadiness: number;
+    confidenceScore: number;
+    technicalDepthScore: number;
+    researchMaturity: number;
+    diagnosis: string;
+  };
+  teams: DefenseReadinessTeam[];
+  alerts: ActivityFeedItem[];
 };
 
 export type ModulePageData = {

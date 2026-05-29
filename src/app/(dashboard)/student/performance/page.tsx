@@ -1,6 +1,3 @@
-import { ModulePage } from "@/components/dashboard/module-page";
-import { studentModules } from "@/data/dashboard-modules";
+import StudentPerformanceScorePage from "@/app/(dashboard)/student/performance-score/page";
 
-export default function Page() {
-  return <ModulePage module={studentModules["performance"]} />;
-}
+export default StudentPerformanceScorePage;

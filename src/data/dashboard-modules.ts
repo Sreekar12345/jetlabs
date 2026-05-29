@@ -175,9 +175,9 @@ export const dashboardModules: Record<string, ModulePageData> = {
   }),
   "/student/evaluation/viva": createModule({
     eyebrow: "Student Evaluation",
-    title: "Viva Readiness",
+    title: "Defense Readiness Intelligence",
     description:
-      "Convert research work and system execution into a concise, defensible oral narrative for review panels and examiners.",
+      "Convert research work and system execution into a defensible technical narrative for review panels and external examiners.",
     stats: [
       { label: "Readiness score", value: "76%", detail: "Composite signal across technical depth, clarity, and Q&A quality." },
       { label: "Question bank", value: "43", detail: "Tracked questions across methodology, datasets, and system design." },
@@ -280,9 +280,9 @@ export const dashboardModules: Record<string, ModulePageData> = {
   }),
   "/faculty/monitoring/team-contribution": createModule({
     eyebrow: "Faculty Monitoring",
-    title: "Team Contribution",
+    title: "Execution Ownership",
     description:
-      "Track ownership balance, collaboration quality, and contribution risk across all active academic project teams.",
+      "Track responsibility distribution, dependency risk, free-rider patterns, and collaboration quality across active project teams.",
     stats: [
       { label: "Balanced teams", value: "12/18", detail: "Teams with healthy spread across effort and artifact ownership." },
       { label: "Dominant contributor risk", value: "3", detail: "Teams relying too heavily on one member.", tone: "warning" },

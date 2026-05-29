@@ -27,10 +27,10 @@ const CHART_COLOR_CLASS_MAP: Record<string, string> = {
 
 function getChartColorClass(color?: string) {
   if (!color) {
-    return "bg-white/60";
+    return "bg-slate-400";
   }
 
-  return CHART_COLOR_CLASS_MAP[color] ?? "bg-white/60";
+  return CHART_COLOR_CLASS_MAP[color] ?? "bg-slate-400";
 }
 
 export function ChartContainer({
@@ -59,7 +59,7 @@ export function ChartTooltipContent({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-panel px-4 py-3 shadow-[0_18px_40px_rgba(0,0,0,0.35)]">
+    <div className="rounded-xl border border-border bg-panel px-4 py-3 shadow-[0_16px_36px_rgba(15,23,42,0.08)]">
       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
       <div className="mt-2 space-y-2">
         {payload.map((entry) => (

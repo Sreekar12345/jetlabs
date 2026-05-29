@@ -1,6 +1,6 @@
 /**
  * Theme provider — wraps the app with next-themes ThemeProvider.
- * Enables dark mode toggle via system preference or manual switch.
+ * Keeps the application on the light academic dashboard theme.
  */
 "use client";
 
@@ -10,7 +10,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="dark"
+      defaultTheme="light"
       enableSystem={false}
       disableTransitionOnChange
     >

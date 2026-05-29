@@ -56,10 +56,10 @@ export function AnalyticsChart<T extends Record<string, string | number>>({
         <ChartContainer>
           {type === "bar" ? (
             <BarChart data={data}>
-              <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <CartesianGrid stroke="rgba(15,23,42,0.08)" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey={xKey} stroke="var(--color-muted-foreground)" tickLine={false} axisLine={false} />
               <YAxis stroke="var(--color-muted-foreground)" tickLine={false} axisLine={false} />
-              <Tooltip content={<ChartTooltipContent />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+              <Tooltip content={<ChartTooltipContent />} cursor={{ fill: "rgba(15,23,42,0.04)" }} />
               {series.map((item) => (
                 <Bar
                   key={item.key}
@@ -73,7 +73,7 @@ export function AnalyticsChart<T extends Record<string, string | number>>({
             </BarChart>
           ) : type === "line" ? (
             <LineChart data={data}>
-              <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <CartesianGrid stroke="rgba(15,23,42,0.08)" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey={xKey} stroke="var(--color-muted-foreground)" tickLine={false} axisLine={false} />
               <YAxis stroke="var(--color-muted-foreground)" tickLine={false} axisLine={false} />
               <Tooltip content={<ChartTooltipContent />} />
@@ -91,7 +91,7 @@ export function AnalyticsChart<T extends Record<string, string | number>>({
             </LineChart>
           ) : (
             <AreaChart data={data}>
-              <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <CartesianGrid stroke="rgba(15,23,42,0.08)" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey={xKey} stroke="var(--color-muted-foreground)" tickLine={false} axisLine={false} />
               <YAxis stroke="var(--color-muted-foreground)" tickLine={false} axisLine={false} />
               <Tooltip content={<ChartTooltipContent />} />

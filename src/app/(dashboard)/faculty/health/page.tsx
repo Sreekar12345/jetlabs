@@ -1,6 +1,13 @@
-import { ModulePage } from "@/components/dashboard/module-page";
-import { facultyModules } from "@/data/dashboard-modules";
+import { ProjectHealthBoard } from "@/components/dashboard/project-health-board";
+import { requirePageSession } from "@/lib/auth/session";
+import { getProjectHealthData } from "@/lib/services/project-health-service";
 
-export default function Page() {
-  return <ModulePage module={facultyModules["health"]} />;
+export default async function Page() {
+  const session = await requirePageSession();
+  const data = await getProjectHealthData({
+    userId: session.user.id,
+    role: session.user.role,
+  });
+
+  return <ProjectHealthBoard data={data} />;
 }

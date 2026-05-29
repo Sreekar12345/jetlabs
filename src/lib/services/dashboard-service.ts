@@ -1038,7 +1038,49 @@ export async function getStudentRoadmap(userId: string) {
   }));
 }
 
-export async function getAdminDashboardData() {
+export interface AdminDashboardData {
+  totalUsers: number;
+  totalStudents: number;
+  totalFaculty: number;
+  totalProjects: number;
+  totalTeams: number;
+  pendingReviewCount: number;
+  batches: Awaited<ReturnType<typeof getFacultyBatchSummaries>>;
+  analytics: Awaited<ReturnType<typeof getBatchAnalyticsForViewer>>;
+  projectStatuses: Array<{ label: string; count: number }>;
+  recentUsers: Array<{
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: string;
+    isActive: boolean;
+    createdAt: string;
+  }>;
+  recentSubmissions: Array<{
+    id: string;
+    title: string;
+    week: number;
+    studentName: string;
+    roll: string;
+    status: "approved" | "rejected" | "revision" | "pending";
+    submittedAt: string;
+  }>;
+  atRiskStudents: Array<{
+    id: string;
+    name: string;
+    roll: string;
+    batch: string;
+    project: string | null;
+    riskLevel: "Critical" | "High";
+    reasons: string[];
+    attendanceOverall: number;
+    missedSubmissions: number;
+    inactiveDays: number;
+    paperProgress: number;
+  }>;
+}
+
+export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   const [users, teams, projects, pendingReviewCount] = await Promise.all([
     db.user.findMany({
       orderBy: {

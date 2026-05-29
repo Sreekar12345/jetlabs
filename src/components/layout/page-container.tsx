@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type PageContainerProps = {
@@ -21,16 +18,11 @@ export function PageContainer({
   children,
 }: PageContainerProps) {
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.24, ease: "easeOut" }}
-      className={cn("space-y-8", className)}
-    >
+    <section className={cn("space-y-8", className)}>
       <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
         <div className="max-w-3xl space-y-3">
           {eyebrow ? (
-            <p className="text-xs font-medium uppercase tracking-[0.26em] text-muted-foreground">
+            <p className="text-xs font-medium uppercase tracking-normal text-muted-foreground">
               {eyebrow}
             </p>
           ) : null}
@@ -44,6 +36,6 @@ export function PageContainer({
         {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
       </div>
       {children}
-    </motion.section>
+    </section>
   );
 }

@@ -1,6 +1,6 @@
-import { ModulePage } from "@/components/dashboard/module-page";
+import { FacultyStudentIntelligenceView } from "@/components/dashboard/faculty-student-intelligence-view";
 import { facultyModules } from "@/data/dashboard-modules";
 
 export default function Page() {
-  return <ModulePage module={facultyModules["students"]} />;
+  return <FacultyStudentIntelligenceView module={facultyModules["students"]} />;
 }

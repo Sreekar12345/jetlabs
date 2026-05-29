@@ -1,6 +1,6 @@
-import { ModulePage } from "@/components/dashboard/module-page";
+import { FacultyTeamExecutionView } from "@/components/dashboard/faculty-team-execution-view";
 import { facultyModules } from "@/data/dashboard-modules";
 
 export default function Page() {
-  return <ModulePage module={facultyModules["teams"]} />;
+  return <FacultyTeamExecutionView module={facultyModules["teams"]} />;
 }

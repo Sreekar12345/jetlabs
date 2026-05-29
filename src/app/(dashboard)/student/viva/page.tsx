@@ -1,6 +1,3 @@
-import { ModulePage } from "@/components/dashboard/module-page";
-import { studentModules } from "@/data/dashboard-modules";
+import StudentVivaPage from "@/app/(dashboard)/student/evaluation/viva/page";
 
-export default function Page() {
-  return <ModulePage module={studentModules["viva"]} />;
-}
+export default StudentVivaPage;

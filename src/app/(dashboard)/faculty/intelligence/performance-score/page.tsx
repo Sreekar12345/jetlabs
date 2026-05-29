@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/dashboard/module-page";
-import { dashboardModules } from "@/data/dashboard-modules";
+import { PerformanceScoreBoard } from "@/components/dashboard/performance-score-board";
 
 export default function FacultyPerformanceScorePage() {
-  return <ModulePage module={dashboardModules["/faculty/intelligence/performance-score"]} />;
+  return <PerformanceScoreBoard />;
 }

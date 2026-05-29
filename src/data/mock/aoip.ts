@@ -2,6 +2,7 @@ import type {
   FacultyDashboardData,
   ProblemMarketData,
   ProjectHealthData,
+  ProjectHealthTeam,
   ReviewQueueData,
   StudentDashboardData,
 } from "@/types/aoip";
@@ -593,6 +594,140 @@ export const reviewQueueData: ReviewQueueData = {
   ],
 };
 
+type MockHealthTeamInput = {
+  id: string;
+  team: string;
+  project: string;
+  mentor: string;
+  completion: number;
+  riskScore: number;
+  backlogItems: number;
+  inactiveDays: number;
+  missedSubmissions: number;
+  velocity: string;
+  alerts: string[];
+  contributionHeatmap: number[];
+  problemStatement?: string;
+  batch?: string;
+  riskLayer?: ProjectHealthTeam["riskLayer"];
+  trend?: ProjectHealthTeam["trend"];
+};
+
+function mockRiskLayer(input: MockHealthTeamInput): ProjectHealthTeam["riskLayer"] {
+  if (input.inactiveDays >= 14) {
+    return "Ghost Team";
+  }
+
+  if (input.riskScore >= 75) {
+    return "Critical";
+  }
+
+  if (input.riskScore >= 65) {
+    return "At Risk";
+  }
+
+  if (input.riskScore >= 45) {
+    return "Slipping";
+  }
+
+  if (input.completion >= 82) {
+    return "Healthy";
+  }
+
+  return "Stable";
+}
+
+function createMockHealthTeam(input: MockHealthTeamInput): ProjectHealthTeam {
+  const riskLayer = input.riskLayer ?? mockRiskLayer(input);
+  const healthScore = Math.max(0, 100 - input.riskScore);
+  const priorityScore = Math.min(
+    100,
+    input.riskScore + input.inactiveDays * 2 + input.missedSubmissions * 8 + input.backlogItems * 2,
+  );
+  const paperCompletionConfidence = Math.max(0, input.completion - input.missedSubmissions * 8);
+  const technicalExecutionConfidence = Math.max(0, input.completion - input.backlogItems * 5);
+  const completionConfidence = Math.max(0, 100 - input.riskScore + input.completion * 0.12);
+  const trend =
+    input.trend ??
+    (input.riskScore >= 70
+      ? "Declining slowly"
+      : input.velocity === "Improving"
+        ? "Improving rapidly"
+        : input.velocity === "Stable" || input.velocity === "Strong"
+          ? "Consistent execution"
+          : "Stagnating");
+  const toneSignals = {
+    Healthy: "Healthy velocity",
+    Stable: "Stable execution",
+    Slipping: "Delayed but recoverable",
+    "At Risk": "Intervention window is closing",
+    Critical: "Critical intervention required",
+    "Ghost Team": "Silent failure pattern detected",
+    "Fake Progress": "Execution mismatch detected",
+    "Research Blocked": "Research stagnation detected",
+    "Mentor Dependent": "Approval bottleneck detected",
+  } satisfies Record<ProjectHealthTeam["riskLayer"], string>;
+
+  return {
+    ...input,
+    problemStatement:
+      input.problemStatement ??
+      "Faculty-reviewed engineering problem with weekly evidence, paper progress, and demo readiness signals.",
+    batch: input.batch ?? "2026 CSE",
+    healthScore,
+    priorityScore,
+    riskLayer,
+    trend,
+    momentum: input.riskScore >= 65 ? "-12% delivery velocity" : "+8% delivery velocity",
+    aiLabel: toneSignals[riskLayer],
+    sprintStatus: "S9 current sprint",
+    deliveryRiskState:
+      riskLayer === "Healthy" || riskLayer === "Stable"
+        ? "Controlled delivery"
+        : riskLayer === "Slipping"
+          ? "Delayed but recoverable"
+          : "Intervention required",
+    completionConfidence,
+    paperCompletionConfidence,
+    vivaReadinessConfidence: Math.round(
+      (completionConfidence + paperCompletionConfidence + technicalExecutionConfidence) / 3,
+    ),
+    technicalExecutionConfidence,
+    mentorLoad: input.riskScore >= 70 ? "High" : input.riskScore >= 45 ? "Medium" : "Low",
+    interventionUrgency:
+      input.riskScore >= 70 ? "Immediate" : input.riskScore >= 45 ? "High" : "Monitor",
+    currentMilestone: input.riskScore >= 65 ? "Recovery checkpoint" : "Final validation",
+    deadlineLabel: input.riskScore >= 65 ? "Due in 2 days" : "Due in 9 days",
+    detectedSignals:
+      input.alerts.length > 0
+        ? input.alerts
+        : ["Consistent submissions across the current sprint window."],
+    qualitySignals: [
+      { label: "GitHub commit consistency", value: input.completion, detail: "Technical cadence inferred from evidence density." },
+      { label: "Deployment uptime", value: technicalExecutionConfidence, detail: `${input.backlogItems} backlog items affect stability.` },
+      { label: "Documentation maturity", value: paperCompletionConfidence, detail: "Paper and execution documentation coverage." },
+      { label: "Research depth", value: paperCompletionConfidence, detail: "Literature and novelty progression." },
+      { label: "Participation equality", value: Math.max(0, 100 - input.riskScore / 2), detail: "Contribution distribution across team members." },
+      { label: "Sprint discipline", value: Math.max(0, 100 - input.missedSubmissions * 20), detail: "Weekly evidence reliability." },
+      { label: "Testing evidence", value: technicalExecutionConfidence, detail: "Experiment and validation trace quality." },
+      { label: "Demo readiness", value: input.completion, detail: "Final demo proof and readiness confidence." },
+      { label: "Technical complexity", value: 78, detail: "Engineering depth and integration complexity." },
+    ],
+    executionTimeline: ["S5", "S6", "S7", "S8", "S9"].map((label, index) => {
+      const base = (input.contributionHeatmap[index] ?? 3) * 18;
+
+      return {
+        label,
+        sprintReliability: Math.min(100, base + 6),
+        submissionReliability: Math.min(100, base + 12),
+        reviewTurnaround: Math.min(100, base + 2),
+        paperVelocity: Math.min(100, paperCompletionConfidence - 12 + index * 4),
+        deploymentStability: Math.min(100, technicalExecutionConfidence - 10 + index * 3),
+      };
+    }),
+  };
+}
+
 export const projectHealthData: ProjectHealthData = {
   stats: [
     { label: "Healthy teams", value: "11", detail: "Teams currently maintaining strong velocity and review hygiene.", tone: "positive" },
@@ -600,6 +735,24 @@ export const projectHealthData: ProjectHealthData = {
     { label: "Critical risk", value: "3", detail: "Intervention required due to inactivity, backlog pressure, or missed work.", tone: "critical" },
     { label: "Mean completion", value: "74%", detail: "Average project completion across active monitored teams." },
   ],
+  executionPulse: {
+    score: 68,
+    state: "3 teams need intervention",
+    summary: "Team Pulse is the highest operational risk because repeated delivery misses and imbalance are compounding.",
+  },
+  riskDistribution: [
+    { label: "Healthy", count: 2 },
+    { label: "Stable", count: 1 },
+    { label: "Slipping", count: 0 },
+    { label: "At Risk", count: 1 },
+    { label: "Critical", count: 1 },
+    { label: "Ghost Team", count: 0 },
+    { label: "Fake Progress", count: 0 },
+    { label: "Research Blocked", count: 0 },
+    { label: "Mentor Dependent", count: 0 },
+  ],
+  aiSummary:
+    "Team Pulse should be reviewed first. Critical queue items, contribution imbalance, and academic pressure indicate immediate mentor intervention.",
   velocitySeries: [
     { sprint: "S5", planned: 24, delivered: 20 },
     { sprint: "S6", planned: 26, delivered: 21 },
@@ -649,7 +802,7 @@ export const projectHealthData: ProjectHealthData = {
     },
   ],
   teams: [
-    {
+    createMockHealthTeam({
       id: "health-team-1",
       team: "Team Falcon",
       project: "Adaptive Academic Risk Scoring",
@@ -662,8 +815,8 @@ export const projectHealthData: ProjectHealthData = {
       velocity: "Stable",
       alerts: ["Benchmark appendix still open"],
       contributionHeatmap: [3, 4, 4, 5, 4, 4, 5, 4, 4, 5],
-    },
-    {
+    }),
+    createMockHealthTeam({
       id: "health-team-2",
       team: "Team Pulse",
       project: "Phishing Classifier Ops Console",
@@ -676,8 +829,8 @@ export const projectHealthData: ProjectHealthData = {
       velocity: "Declining",
       alerts: ["Critical queue item", "Contribution imbalance", "Academic pressure"],
       contributionHeatmap: [1, 2, 2, 1, 3, 1, 2, 1, 2, 1],
-    },
-    {
+    }),
+    createMockHealthTeam({
       id: "health-team-3",
       team: "Team Lyra",
       project: "AI Tutor Workflow",
@@ -690,8 +843,8 @@ export const projectHealthData: ProjectHealthData = {
       velocity: "Strong",
       alerts: ["Instrumentation refinement needed"],
       contributionHeatmap: [3, 4, 5, 4, 4, 5, 4, 4, 5, 4],
-    },
-    {
+    }),
+    createMockHealthTeam({
       id: "health-team-4",
       team: "Team Orion",
       project: "Campus Air Sentinel",
@@ -704,8 +857,8 @@ export const projectHealthData: ProjectHealthData = {
       velocity: "Unstable",
       alerts: ["Hardware blocker unresolved", "Validation lag"],
       contributionHeatmap: [2, 2, 3, 2, 3, 2, 2, 3, 2, 2],
-    },
-    {
+    }),
+    createMockHealthTeam({
       id: "health-team-5",
       team: "Team Atlas",
       project: "Market Signal Copilot",
@@ -718,6 +871,6 @@ export const projectHealthData: ProjectHealthData = {
       velocity: "Improving",
       alerts: ["Review assumptions need cleanup"],
       contributionHeatmap: [4, 3, 4, 4, 5, 4, 4, 5, 4, 4],
-    },
+    }),
   ],
 };

@@ -1,6 +1,5 @@
-import { ModulePage } from "@/components/dashboard/module-page";
-import { dashboardModules } from "@/data/dashboard-modules";
+import { BacklogAnalyticsBoard } from "@/components/dashboard/backlog-analytics-board";
 
 export default function BacklogAnalyticsPage() {
-  return <ModulePage module={dashboardModules["/faculty/monitoring/backlog-analytics"]} />;
+  return <BacklogAnalyticsBoard />;
 }

@@ -1,6 +1,13 @@
-import { ModulePage } from "@/components/dashboard/module-page";
-import { facultyModules } from "@/data/dashboard-modules";
+import { DefenseReadinessIntelligenceBoard } from "@/components/dashboard/defense-readiness-intelligence-board";
+import { requirePageSession } from "@/lib/auth/session";
+import { getDefenseReadinessData } from "@/lib/services/defense-readiness-service";
 
-export default function Page() {
-  return <ModulePage module={facultyModules["viva"]} />;
+export default async function Page() {
+  const session = await requirePageSession();
+  const data = await getDefenseReadinessData({
+    userId: session.user.id,
+    role: session.user.role,
+  });
+
+  return <DefenseReadinessIntelligenceBoard data={data} />;
 }

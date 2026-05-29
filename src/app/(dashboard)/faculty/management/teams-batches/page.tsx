@@ -1,6 +1,10 @@
-import { ModulePage } from "@/components/dashboard/module-page";
+import { FacultyTeamExecutionView } from "@/components/dashboard/faculty-team-execution-view";
 import { dashboardModules } from "@/data/dashboard-modules";
 
 export default function FacultyTeamsBatchesPage() {
-  return <ModulePage module={dashboardModules["/faculty/management/teams-batches"]} />;
+  return (
+    <FacultyTeamExecutionView
+      module={dashboardModules["/faculty/management/teams-batches"]}
+    />
+  );
 }

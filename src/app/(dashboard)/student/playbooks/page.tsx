@@ -1,6 +1,3 @@
-import { ModulePage } from "@/components/dashboard/module-page";
-import { studentModules } from "@/data/dashboard-modules";
+import ExecutionPlaybookPage from "@/app/(dashboard)/student/execution/execution-playbook/page";
 
-export default function Page() {
-  return <ModulePage module={studentModules["playbooks"]} />;
-}
+export default ExecutionPlaybookPage;
