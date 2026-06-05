@@ -63,11 +63,11 @@ export const registerSchema = z
     email: z.string(),
     password: z.string(),
     role: z.enum(["STUDENT", "FACULTY", "ADMIN"]).optional(),
-    phoneNumber: z.string().optional(),
-    department: z.string().optional(),
-    batchYear: z.string().optional(),
-    rollNumber: z.string().optional(),
-    specialization: z.string().optional(),
+    phoneNumber: z.string().nullable().optional(),
+    department: z.string().nullable().optional(),
+    batchYear: z.string().nullable().optional(),
+    rollNumber: z.string().nullable().optional(),
+    specialization: z.string().nullable().optional(),
   })
   .transform(({ name, email, password, role, phoneNumber, department, batchYear, rollNumber, specialization }) => ({
     name: trimString(name),
