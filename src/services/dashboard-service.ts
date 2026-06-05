@@ -1,0 +1,18 @@
+export {
+  getAdminDashboardData,
+  getAtRiskStudents,
+  getBatchAnalytics,
+  getBatchAnalyticsForViewer,
+  getFacultyBatchSummaries,
+  getFacultyDashboardData,
+  getPerformanceDistribution,
+  getStudentById,
+  getStudentDashboardData,
+  getStudentRoadmap,
+  getStudentsByBatch,
+  getStudentsByDepartment,
+  getStudentsForViewer,
+  getTeamData,
+  getWeeklyChartData,
+  searchStudents,
+} from "@/lib/services/dashboard-service";
