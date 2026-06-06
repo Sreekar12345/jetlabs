@@ -8,6 +8,10 @@ export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL);
+    console.log("DIRECT_URL exists:", !!process.env.DIRECT_URL);
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+
     const body = (await request.json()) as unknown;
     const validation = registerSchema.safeParse(body);
 
@@ -65,11 +69,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.error("Registration failed", error);
+    console.error("REGISTER ERROR:", error);
 
     return apiError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "Unable to create your account right now.",
+      message: error instanceof Error ? error.message : "Unknown error",
       status: 500,
     });
   }

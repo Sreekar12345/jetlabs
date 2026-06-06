@@ -4,6 +4,7 @@
  * In production, this just creates one instance.
  */
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -31,13 +32,6 @@ function getRuntimeDatabaseUrl() {
       parsed.searchParams.set("connect_timeout", "15");
     }
 
-    if (
-      parsed.hostname.includes("-pooler.") &&
-      !parsed.searchParams.has("pgbouncer")
-    ) {
-      parsed.searchParams.set("pgbouncer", "true");
-    }
-
     return parsed.toString();
   } catch {
     return databaseUrl;
@@ -45,6 +39,14 @@ function getRuntimeDatabaseUrl() {
 }
 
 const runtimeDatabaseUrl = getRuntimeDatabaseUrl();
+
+if (!runtimeDatabaseUrl) {
+  throw new Error("DATABASE_URL or DIRECT_URL must be configured.");
+}
+
+const adapter = new PrismaPg({
+  connectionString: runtimeDatabaseUrl,
+});
 const shouldReuseExistingClient =
   globalForPrisma.prisma &&
   globalForPrisma.prismaUrl === (runtimeDatabaseUrl ?? undefined);
@@ -56,13 +58,8 @@ if (!shouldReuseExistingClient && globalForPrisma.prisma) {
 export const db =
   globalForPrisma.prisma && shouldReuseExistingClient
     ? globalForPrisma.prisma
-    :
-  new PrismaClient({
-        ...(runtimeDatabaseUrl
-          ? {
-              datasourceUrl: runtimeDatabaseUrl,
-            }
-          : {}),
+    : new PrismaClient({
+        adapter,
         log:
           process.env.NODE_ENV === "development"
             ? ["query", "error", "warn"]
