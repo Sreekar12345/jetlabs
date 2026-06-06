@@ -1,9 +1,23 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans, Space_Grotesk, Space_Mono } from "next/font/google";
 import { Providers } from "@/providers";
 import "./globals.css";
 
-const inter = { variable: "font-sans" };
-const geistMono = { variable: "font-mono" };
+const sans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const display = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display",
+});
+
+const mono = Space_Mono({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
   title: "JetLabs | Academic Project Execution Platform",
@@ -20,7 +34,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${sans.variable} ${display.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Providers>{children}</Providers>

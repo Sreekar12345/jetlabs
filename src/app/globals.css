@@ -125,8 +125,9 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-critical: var(--critical);
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
 }
 
 @layer base {
@@ -145,7 +146,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
     background-image: none;
   }
 

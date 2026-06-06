@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState, useTransition } from "react";
+import { useDeferredValue, useMemo, useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ReviewDecision } from "@prisma/client";
 import {
@@ -172,6 +172,13 @@ export function ReviewQueueBoard({ initialData }: { initialData: ReviewQueueData
   const [mockQueue, setMockQueue] = useState<ReviewQueueItem[]>(MOCK_QUEUE_ITEMS);
   const [isPending, startTransition] = useTransition();
 
+  const [execution, setExecution] = useState(8);
+  const [research, setResearch] = useState(7);
+  const [uiux, setUiux] = useState(8);
+  const [feasibility, setFeasibility] = useState(9);
+  const [documentation, setDocumentation] = useState(6);
+  const [commentsText, setCommentsText] = useState("");
+
   const pendingQueue = useMemo(() => {
     const dbPending = initialData.queue.filter((item) => item.status === "Pending");
     const uniqueMocks = mockQueue.filter(
@@ -182,25 +189,53 @@ export function ReviewQueueBoard({ initialData }: { initialData: ReviewQueueData
 
   const activeReview = selectedReview || pendingQueue[0] || null;
 
+  useEffect(() => {
+    if (!activeReview) return;
+    if (activeReview.team.includes("Falcon")) {
+      setExecution(8);
+      setResearch(7);
+      setUiux(8);
+      setFeasibility(9);
+      setDocumentation(6);
+      setCommentsText("Good integration. Add a confusion matrix on the results page. Improve loading states. Document API in README.");
+    } else if (activeReview.team.includes("Vega")) {
+      setExecution(7);
+      setResearch(9);
+      setUiux(6);
+      setFeasibility(8);
+      setDocumentation(7);
+      setCommentsText("Research depth is excellent. Please focus on polishing the UI/UX rendering for MRI slices. The segmentations look accurate.");
+    } else if (activeReview.team.includes("Atlas")) {
+      setExecution(9);
+      setResearch(8);
+      setUiux(9);
+      setFeasibility(9);
+      setDocumentation(8);
+      setCommentsText("Great MLOps pipeline. Prometheus alerts are well configured. Verify AWS ECS cost budgets.");
+    } else if (activeReview.team.includes("Nova")) {
+      setExecution(6);
+      setResearch(7);
+      setUiux(5);
+      setFeasibility(7);
+      setDocumentation(6);
+      setCommentsText("Need to address the 502 Bad Gateway deploy error. XGBoost validation details look okay.");
+    } else {
+      setExecution(8);
+      setResearch(8);
+      setUiux(8);
+      setFeasibility(8);
+      setDocumentation(8);
+      setCommentsText("Good progress. Ensure testing coverage is documented.");
+    }
+  }, [activeReview?.id]);
+
   function handleReviewSubmit(decision: ReviewDecision) {
     if (!activeReview) {
       return;
     }
 
-    let score = 90;
-    let comments =
-      "Approved after review. Evidence and delivery signals are sufficient for this checkpoint.";
-    if (decision === ReviewDecision.REVISION_REQUIRED) {
-      score = 60;
-      comments =
-        "Requesting fixes before approval. Please attach missing evidence and strengthen documentation clarity.";
-    } else if (decision === ReviewDecision.REJECTED) {
-      score = 40;
-      comments = "Rejected. Submission does not meet the required criteria.";
-    } else if (decision === ReviewDecision.ESCALATED) {
-      score = 70;
-      comments = "Review submitted with comments.";
-    }
+    const calculatedScore = Math.round(((execution + research + uiux + feasibility + documentation) / 5) * 10);
+    const comments = commentsText.trim() || "Review submitted.";
 
     startTransition(async () => {
       if (activeReview.id.startsWith("mock-")) {
@@ -213,7 +248,7 @@ export function ReviewQueueBoard({ initialData }: { initialData: ReviewQueueData
       const result = await submitReviewAction({
         comments,
         decision,
-        score,
+        score: calculatedScore,
         submissionId: activeReview.id,
       });
 
@@ -397,6 +432,134 @@ export function ReviewQueueBoard({ initialData }: { initialData: ReviewQueueData
                         </div>
                       )
                     )}
+                  </div>
+                </div>
+                {/* Structured Feedback Section */}
+                <div className="pt-6 border-t border-slate-100 space-y-6">
+                  <div className="space-y-1">
+                    <h3 className="text-base font-semibold text-slate-900">Structured feedback</h3>
+                    <p className="text-xs text-slate-400 font-medium">Rate each dimension and add specific comments</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Execution Quality Slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs font-semibold text-slate-700">
+                        <span>Execution quality</span>
+                        <span className="font-bold text-slate-900">{execution} / 10</span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          value={execution}
+                          onChange={(e) => setExecution(parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-950 focus:outline-none"
+                          style={{
+                            backgroundImage: `linear-gradient(to right, #0f172a 0%, #0f172a ${(execution - 1) * 11.11}%, #f1f5f9 ${(execution - 1) * 11.11}%, #f1f5f9 100%)`
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Research Quality Slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs font-semibold text-slate-700">
+                        <span>Research quality</span>
+                        <span className="font-bold text-slate-900">{research} / 10</span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          value={research}
+                          onChange={(e) => setResearch(parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-950 focus:outline-none"
+                          style={{
+                            backgroundImage: `linear-gradient(to right, #0f172a 0%, #0f172a ${(research - 1) * 11.11}%, #f1f5f9 ${(research - 1) * 11.11}%, #f1f5f9 100%)`
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* UI/UX Quality Slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs font-semibold text-slate-700">
+                        <span>UI/UX quality</span>
+                        <span className="font-bold text-slate-900">{uiux} / 10</span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          value={uiux}
+                          onChange={(e) => setUiux(parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-950 focus:outline-none"
+                          style={{
+                            backgroundImage: `linear-gradient(to right, #0f172a 0%, #0f172a ${(uiux - 1) * 11.11}%, #f1f5f9 ${(uiux - 1) * 11.11}%, #f1f5f9 100%)`
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Technical Feasibility Slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs font-semibold text-slate-700">
+                        <span>Technical feasibility</span>
+                        <span className="font-bold text-slate-900">{feasibility} / 10</span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          value={feasibility}
+                          onChange={(e) => setFeasibility(parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-950 focus:outline-none"
+                          style={{
+                            backgroundImage: `linear-gradient(to right, #0f172a 0%, #0f172a ${(feasibility - 1) * 11.11}%, #f1f5f9 ${(feasibility - 1) * 11.11}%, #f1f5f9 100%)`
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Documentation Quality Slider */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs font-semibold text-slate-700">
+                        <span>Documentation quality</span>
+                        <span className="font-bold text-slate-900">{documentation} / 10</span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          value={documentation}
+                          onChange={(e) => setDocumentation(parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-950 focus:outline-none"
+                          style={{
+                            backgroundImage: `linear-gradient(to right, #0f172a 0%, #0f172a ${(documentation - 1) * 11.11}%, #f1f5f9 ${(documentation - 1) * 11.11}%, #f1f5f9 100%)`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Comments & Suggestions Input */}
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+                      Comments & suggestions
+                    </h4>
+                    <textarea
+                      value={commentsText}
+                      onChange={(e) => setCommentsText(e.target.value)}
+                      rows={3}
+                      className="w-full p-4 text-xs bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-slate-300 text-slate-700 leading-relaxed resize-none shadow-inner"
+                      placeholder="Write review comments or suggestions here..."
+                    />
                   </div>
                 </div>
 
