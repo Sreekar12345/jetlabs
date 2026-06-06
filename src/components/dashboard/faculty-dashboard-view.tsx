@@ -177,9 +177,9 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
   const c9 = getCard(8, "High-risk students", "4", "High or Critical risk", "critical");
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-slate-50/30">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* 1. Header Control Block */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-100">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-border">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Faculty dashboard</h1>
           <p className="text-sm text-slate-500 mt-1">{data.header.subtitle}</p>
@@ -189,24 +189,24 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
             onClick={() => setIsCreateModalOpen(true)}
             variant="outline"
             size="sm"
-            className="rounded-xl border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
+            className="rounded-full border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
           >
             <Plus className="size-4 mr-2" />
             Create a team
           </Button>
-          <Button variant="outline" size="sm" asChild className="rounded-xl border-slate-200 text-slate-700 bg-white hover:bg-slate-50">
+          <Button variant="outline" size="sm" asChild className="rounded-full border-slate-200 text-slate-700 bg-white hover:bg-slate-50">
             <Link href="/faculty/management/teams-batches">
               <Users2 className="size-4 mr-2" />
               View teams
             </Link>
           </Button>
-          <Button variant="outline" size="sm" asChild className="rounded-xl border-slate-200 text-slate-700 bg-white hover:bg-slate-50">
+          <Button variant="outline" size="sm" asChild className="rounded-full border-slate-200 text-slate-700 bg-white hover:bg-slate-50">
             <Link href="/faculty/management/students">
               <Users className="size-4 mr-2" />
               Students
             </Link>
           </Button>
-          <Button size="sm" asChild className="rounded-xl bg-slate-900 text-white hover:bg-slate-800">
+          <Button size="sm" asChild className="rounded-full bg-black text-white hover:bg-black/90 border-0">
             <Link href="/faculty/review/review-queue">
               <ClipboardCheck className="size-4 mr-2" />
               Review queue (22)

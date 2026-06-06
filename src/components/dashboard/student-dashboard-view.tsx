@@ -2,6 +2,18 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalBody,
+  ModalFooter,
+} from "@/components/ui/modal";
 import {
   ArrowRight,
   CalendarDays,
@@ -298,6 +310,27 @@ function getDashboardWeeklyFocus(weekNum: number, projectTitle: string, domain: 
 }
 
 export function StudentDashboardView({ data }: StudentDashboardViewProps) {
+  const [isTeamCodeModalOpen, setIsTeamCodeModalOpen] = useState(false);
+  const [teamCode, setTeamCode] = useState("");
+
+  useEffect(() => {
+    const savedCode = localStorage.getItem("student.teamCode");
+    if (!savedCode) {
+      setIsTeamCodeModalOpen(true);
+    }
+  }, []);
+
+  function handleTeamCodeSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!teamCode.trim()) {
+      toast.error("Please enter a valid team code.");
+      return;
+    }
+    localStorage.setItem("student.teamCode", teamCode.trim().toUpperCase());
+    setIsTeamCodeModalOpen(false);
+    toast.success(`Team code "${teamCode.trim().toUpperCase()}" linked successfully!`);
+  }
+
   const heading = greetingFromTitle(data.welcome.title);
   const currentWeek = getCurrentWeek(data.researchSeries);
   const projectTitle =
@@ -348,7 +381,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                       {metric.value}
                     </p>
                   </div>
-                  <span className="flex size-10 items-center justify-center rounded-xl border border-border bg-muted text-foreground">
+                  <span className="flex size-10 items-center justify-center rounded-full border border-border bg-muted text-foreground">
                     <Icon className="size-4" />
                   </span>
                 </div>
@@ -390,7 +423,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                       <div
                         key={tracker.id}
                         className={cn(
-                          "rounded-xl border p-4 transition-colors",
+                          "rounded-[8px] border p-4 transition-colors",
                           statusTone(tracker.status),
                         )}
                       >
@@ -437,16 +470,16 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                     data.welcome.projectCategory || ""
                   );
                   return (
-                    <div className="rounded-2xl border border-indigo-500/25 bg-gradient-to-br from-indigo-950/90 to-slate-900/95 p-5 text-white flex flex-col justify-between shadow-xl">
+                    <div className="rounded-[24px] border-0 bg-block-navy p-6 text-white flex flex-col justify-between shadow-none">
                       <div>
                         <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3 mb-4">
                           <div>
-                            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Active Week Focus</p>
-                            <h3 className="text-sm font-bold text-white mt-1 leading-snug">
+                            <p className="text-xs font-mono uppercase tracking-[0.05em] text-[#c5b0f4]">Active Week Focus</p>
+                            <h3 className="text-lg font-bold text-white mt-1 leading-snug font-sans">
                               {focus.title}
                             </h3>
                           </div>
-                          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white border-0">
                             <Clock3 className="size-4" />
                           </span>
                         </div>
@@ -456,11 +489,11 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                         </p>
 
                         <div className="space-y-3">
-                          <p className="text-xs font-bold text-indigo-300 uppercase tracking-wide">Tasks for this week</p>
+                          <p className="text-xs font-mono uppercase tracking-[0.05em] text-[#c5b0f4]">Tasks for this week</p>
                           <div className="space-y-2.5">
-                            {focus.tasks.map((task, idx) => (
+                            {focus.focus && focus.tasks.map((task, idx) => (
                               <div key={idx} className="flex gap-2 text-xs leading-relaxed text-slate-200">
-                                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border border-indigo-400/30 bg-indigo-500/20 text-indigo-300 font-bold text-[9px]">
+                                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white font-mono text-[9px]">
                                   {idx + 1}
                                 </span>
                                 <span>{task}</span>
@@ -471,7 +504,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                       </div>
 
                       <div className="mt-6 pt-4 border-t border-white/10">
-                        <Button asChild className="w-full h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20 border-0">
+                        <Button asChild className="w-full h-10 rounded-full bg-white hover:bg-white/90 text-black font-semibold flex items-center justify-center gap-1.5 shadow-none border-0">
                           <Link href="/student/execution/weekly-submissions">
                             Submit Proof of Work
                             <ArrowRight className="size-4" />
@@ -550,7 +583,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
               const status = commentStatus(index);
 
               return (
-                <div key={feedback.id} className="rounded-xl border border-border p-4">
+                <div key={feedback.id} className="rounded-[8px] border border-border p-4">
                   <div className="flex items-start gap-3">
                     <Avatar className="size-9 border border-border">
                       <AvatarFallback className="bg-muted text-xs font-semibold">
@@ -662,7 +695,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                 ["Streak", data.submissions.length > 0 ? "4w" : "0w"],
                 ["Avg score", averageScore],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-border bg-muted/40 p-3">
+                <div key={label} className="rounded-[8px] border border-border bg-muted/40 p-3">
                   <p className="text-xs text-muted-foreground">{label}</p>
                   <p className="mt-1 text-lg font-semibold text-foreground">{value}</p>
                 </div>
@@ -710,6 +743,41 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
           </CardContent>
         </Card>
       </div>
+
+      <Modal open={isTeamCodeModalOpen} onOpenChange={() => {}}>
+        <ModalContent className="max-w-md">
+          <form onSubmit={handleTeamCodeSubmit}>
+            <ModalHeader>
+              <div>
+                <ModalTitle>Enter Team Code</ModalTitle>
+                <ModalDescription>
+                  Synchronize your student workspace progress with your capstone project team.
+                </ModalDescription>
+              </div>
+            </ModalHeader>
+            <ModalBody className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-foreground">
+                  What is your team code?
+                </label>
+                <Input
+                  type="text"
+                  placeholder="e.g. JET-409, AP-802"
+                  value={teamCode}
+                  onChange={(e) => setTeamCode(e.target.value)}
+                  className="w-full"
+                  required
+                />
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button type="submit" className="w-full">
+                Link Team
+              </Button>
+            </ModalFooter>
+          </form>
+        </ModalContent>
+      </Modal>
     </PageContainer>
   );
 }

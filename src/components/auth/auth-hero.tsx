@@ -11,12 +11,8 @@ import { StatsCard } from "@/components/auth/stats-card";
 
 export function AuthHero() {
   return (
-    <aside className="relative hidden min-h-screen overflow-hidden border-r border-indigo-100/10 bg-[#020617] text-white lg:flex">
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,#020617_0%,#0B1026_42%,#15194A_72%,#1E1B5A_100%)]" />
-      <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(199,210,254,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(199,210,254,0.08)_1px,transparent_1px)] [background-size:44px_44px]" />
-      <div className="absolute left-1/4 top-0 h-96 w-96 rounded-full bg-indigo-400/[0.18] blur-3xl" />
-      <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-[#1E1B5A]/[0.55] blur-3xl" />
-      <div className="absolute bottom-16 left-0 h-72 w-72 rounded-full bg-purple-400/10 blur-3xl" />
+    <aside className="relative hidden min-h-screen overflow-hidden border-r border-black/10 bg-block-navy text-white lg:flex">
+      <div className="absolute inset-0 opacity-[0.04] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:32px_32px]" />
 
       <div className="relative z-10 flex w-full flex-col justify-between px-12 py-14 xl:px-16">
         <motion.div
@@ -25,7 +21,7 @@ export function AuthHero() {
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="flex items-center gap-4"
         >
-          <div className="flex size-12 items-center justify-center rounded-[8px] border border-indigo-100/[0.16] bg-white/[0.08] text-white shadow-[0_10px_34px_rgba(2,6,23,0.45)] backdrop-blur">
+          <div className="flex size-12 items-center justify-center rounded-[8px] border border-white/10 bg-white/5 text-white shadow-none backdrop-blur">
             <Orbit className="size-5" aria-hidden="true" />
           </div>
           <div>
@@ -43,7 +39,7 @@ export function AuthHero() {
           className="max-w-3xl space-y-8"
         >
           <div className="space-y-5">
-            <p className="inline-flex rounded-full border border-indigo-100/[0.16] bg-white/[0.08] px-4 py-1.5 text-sm font-medium text-indigo-100/[0.78] shadow-[0_12px_42px_rgba(99,102,241,0.12)] backdrop-blur">
+            <p className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-medium text-white shadow-none backdrop-blur">
               {AUTH_HERO_CONTENT.badge}
             </p>
             <h2 className="max-w-3xl whitespace-pre-line text-5xl font-semibold leading-tight tracking-normal text-balance text-white xl:text-6xl">

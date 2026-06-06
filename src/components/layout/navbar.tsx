@@ -30,7 +30,7 @@ export function Navbar({ user }: NavbarProps) {
           type="button"
           variant="outline"
           size="icon"
-          className="size-10 rounded-xl lg:hidden"
+          className="size-10 rounded-full lg:hidden"
           onClick={toggleSidebar}
           aria-label="Open navigation"
         >
@@ -41,7 +41,7 @@ export function Navbar({ user }: NavbarProps) {
           type="button"
           variant="ghost"
           size="icon"
-          className="hidden size-10 rounded-xl text-muted-foreground hover:text-foreground lg:inline-flex"
+          className="hidden size-10 rounded-full text-muted-foreground hover:text-foreground lg:inline-flex"
           onClick={toggleSidebarCollapsed}
           aria-label="Toggle sidebar width"
         >
@@ -51,7 +51,7 @@ export function Navbar({ user }: NavbarProps) {
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="h-11 rounded-2xl border-border bg-muted/60 pl-11 text-sm shadow-none placeholder:text-muted-foreground focus-visible:bg-white"
+            className="h-11 rounded-[8px] border-border bg-muted/60 pl-11 text-sm shadow-none placeholder:text-muted-foreground focus-visible:bg-white"
             placeholder={searchPlaceholder}
           />
         </div>
@@ -60,7 +60,7 @@ export function Navbar({ user }: NavbarProps) {
           type="button"
           variant="ghost"
           size="icon"
-          className="size-10 rounded-xl text-muted-foreground hover:text-foreground"
+          className="size-10 rounded-full text-muted-foreground hover:text-foreground"
           aria-label="Theme"
         >
           <Moon className="size-4" />
@@ -70,7 +70,7 @@ export function Navbar({ user }: NavbarProps) {
           type="button"
           variant="ghost"
           size="icon"
-          className="size-10 rounded-xl text-muted-foreground hover:text-foreground"
+          className="size-10 rounded-full text-muted-foreground hover:text-foreground"
           aria-label="Notifications"
         >
           <Bell className="size-4" />

@@ -19,12 +19,12 @@ export function StatsCard({
   return (
     <article
       className={cn(
-        "group relative overflow-hidden rounded-[8px] border border-white/10 bg-[#0B1026]/[0.68] p-5 text-white shadow-[0_18px_60px_rgba(2,6,23,0.34)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-indigo-200/[0.24] hover:bg-[#15194A]/[0.74]",
+        "group relative overflow-hidden rounded-[8px] border border-white/10 bg-white/5 p-5 text-white shadow-none backdrop-blur-xl transition duration-200",
         className,
       )}
     >
       <div
-        className="relative flex size-11 items-center justify-center rounded-[8px] border border-white/10 bg-white/[0.08] text-white transition duration-300 group-hover:scale-105"
+        className="relative flex size-11 items-center justify-center rounded-[8px] border border-white/10 bg-white/5 text-white transition duration-200"
       >
         <Icon className="size-5" aria-hidden="true" />
       </div>

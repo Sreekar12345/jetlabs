@@ -23,10 +23,10 @@ export default async function AuthSignupPage({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
 
   return (
-    <main className="grid min-h-screen bg-background lg:grid-cols-[1.05fr_0.95fr]">
+    <main className="grid min-h-screen bg-[#f7f7f5] lg:grid-cols-[1.05fr_0.95fr]">
       <AuthHero />
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.07),transparent_32%)]" />
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f7f7f5]">
+        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(black_1px,transparent_1px),linear-gradient(90deg,black_1px,transparent_1px)] [background-size:32px_32px]" />
         <div className="relative z-10 w-full">
           <RegisterForm
             callbackUrl={

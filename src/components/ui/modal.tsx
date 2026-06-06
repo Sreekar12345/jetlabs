@@ -73,7 +73,7 @@ function ModalContent({
       exit={{ opacity: 0, y: 16, scale: 0.98 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={cn(
-        "relative z-10 w-full max-w-2xl rounded-2xl border border-border bg-card shadow-[0_32px_80px_rgba(0,0,0,0.45)]",
+        "relative z-10 w-full max-w-xl rounded-[24px] border border-border bg-card shadow-none",
         className,
       )}
     >
@@ -100,6 +100,8 @@ function ModalTitle({
 }: React.ComponentProps<"h3">) {
   return <h3 className={cn("text-lg font-semibold", className)} {...props} />;
 }
+
+// ... rest of the helper functions ...
 
 function ModalDescription({
   className,
@@ -135,12 +137,14 @@ function ModalCloseButton({
     <button
       type="button"
       className={cn(
-        "inline-flex size-10 items-center justify-center rounded-2xl border border-border bg-muted text-muted-foreground transition hover:bg-accent hover:text-foreground",
+        "inline-flex size-10 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground transition hover:bg-accent hover:text-foreground",
         className,
       )}
       {...props}
     >
-      <X className="size-4" />
+      <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
     </button>
   );
 }

@@ -61,7 +61,7 @@ function TabsList({
     <div
       data-slot="tabs-list"
       className={cn(
-        "inline-flex rounded-2xl border border-border bg-muted p-1.5",
+        "inline-flex rounded-full border border-border bg-muted p-1",
         className,
       )}
       {...props}
@@ -88,7 +88,7 @@ function TabsTrigger({
       data-state={isActive ? "active" : "inactive"}
       type="button"
       className={cn(
-        "rounded-2xl px-4 py-2 text-sm font-medium text-muted-foreground transition duration-200 hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_8px_24px_rgba(15,23,42,0.06)]",
+        "rounded-full px-4 py-1.5 text-sm font-medium transition duration-200 text-black/60 hover:text-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none",
         className,
       )}
       onClick={() => context.setValue(value)}

@@ -103,20 +103,20 @@ function SidebarPanel({ user, collapsed, onNavigate }: SidebarPanelProps) {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-[#f8fafc]">
+    <div className="flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-[#f7f7f5]">
       <div
         className={cn(
           "flex h-[72px] items-center gap-3 border-b border-sidebar-border px-5",
           collapsed && "justify-center px-0",
         )}
       >
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-black text-white">
           <Orbit className="size-4" />
         </div>
         {!collapsed ? (
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">Syntra</p>
-            <p className="truncate text-xs text-muted-foreground">Academic OS</p>
+            <p className="truncate text-sm font-semibold text-black">Syntra</p>
+            <p className="truncate text-xs text-black/60">Academic OS</p>
           </div>
         ) : null}
       </div>
@@ -134,17 +134,17 @@ function SidebarPanel({ user, collapsed, onNavigate }: SidebarPanelProps) {
                 title={item.title}
                 onClick={onNavigate}
                 className={cn(
-                  "group flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium transition duration-200",
+                  "group flex h-10 items-center gap-3 rounded-full px-3 text-sm font-medium transition duration-200",
                   active
-                    ? "bg-white text-foreground shadow-[0_8px_24px_rgba(15,23,42,0.06)] ring-1 ring-border"
-                    : "text-muted-foreground hover:bg-white hover:text-foreground",
+                    ? "bg-black text-white shadow-none"
+                    : "text-black/60 hover:bg-black/5 hover:text-black",
                   collapsed && "justify-center px-0",
                 )}
               >
                 <Icon
                   className={cn(
                     "size-3.5 shrink-0",
-                    active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+                    active ? "text-white" : "text-black/60 group-hover:text-black",
                   )}
                 />
                 {!collapsed ? (
@@ -159,7 +159,7 @@ function SidebarPanel({ user, collapsed, onNavigate }: SidebarPanelProps) {
       <div className={cn("border-t border-sidebar-border p-3", collapsed && "px-2")}>
         <div
           className={cn(
-            "flex items-center gap-3 rounded-xl border border-border bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)]",
+            "flex items-center gap-3 rounded-[8px] border border-border bg-white p-3 shadow-none",
             collapsed && "justify-center border-transparent p-0",
           )}
         >
@@ -180,7 +180,7 @@ function SidebarPanel({ user, collapsed, onNavigate }: SidebarPanelProps) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+                className="size-8 rounded-full text-muted-foreground hover:text-foreground"
                 onClick={handleSignOut}
                 disabled={isSigningOut}
                 aria-label="Sign out"
@@ -224,7 +224,7 @@ export function Sidebar({ user }: SidebarProps) {
             className="absolute inset-0 bg-black/20"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="relative z-10 h-full w-[86vw] max-w-80 bg-[#f8fafc]">
+          <div className="relative z-10 h-full w-[86vw] max-w-80 bg-[#f7f7f5]">
             <SidebarPanel
               user={user}
               collapsed={false}
