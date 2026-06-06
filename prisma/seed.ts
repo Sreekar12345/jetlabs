@@ -2,7 +2,6 @@ import {
   DifficultyLevel,
   HealthStatus,
   MilestoneStatus,
-  PrismaClient,
   ProblemSource,
   ProjectStatus,
   ReviewDecision,
@@ -11,8 +10,7 @@ import {
   SubmissionType,
 } from "@prisma/client";
 import { hash } from "bcryptjs";
-
-const prisma = new PrismaClient();
+import { db as prisma } from "../src/lib/db";
 
 const PASSWORD = "Syntra123";
 
