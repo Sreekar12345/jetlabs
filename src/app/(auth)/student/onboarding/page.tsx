@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function OnboardingPage() {
-  redirect("/student/dashboard");
+  redirect("/student/onboarding/team");
 }
+
