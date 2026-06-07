@@ -310,26 +310,7 @@ function getDashboardWeeklyFocus(weekNum: number, projectTitle: string, domain: 
 }
 
 export function StudentDashboardView({ data }: StudentDashboardViewProps) {
-  const [isTeamCodeModalOpen, setIsTeamCodeModalOpen] = useState(false);
-  const [teamCode, setTeamCode] = useState("");
 
-  useEffect(() => {
-    const savedCode = localStorage.getItem("student.teamCode");
-    if (!savedCode) {
-      setIsTeamCodeModalOpen(true);
-    }
-  }, []);
-
-  function handleTeamCodeSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!teamCode.trim()) {
-      toast.error("Please enter a valid team code.");
-      return;
-    }
-    localStorage.setItem("student.teamCode", teamCode.trim().toUpperCase());
-    setIsTeamCodeModalOpen(false);
-    toast.success(`Team code "${teamCode.trim().toUpperCase()}" linked successfully!`);
-  }
 
   const heading = greetingFromTitle(data.welcome.title);
   const currentWeek = getCurrentWeek(data.researchSeries);
@@ -744,40 +725,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
         </Card>
       </div>
 
-      <Modal open={isTeamCodeModalOpen} onOpenChange={() => {}}>
-        <ModalContent className="max-w-md">
-          <form onSubmit={handleTeamCodeSubmit}>
-            <ModalHeader>
-              <div>
-                <ModalTitle>Enter Team Code</ModalTitle>
-                <ModalDescription>
-                  Synchronize your student workspace progress with your capstone project team.
-                </ModalDescription>
-              </div>
-            </ModalHeader>
-            <ModalBody className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-foreground">
-                  What is your team code?
-                </label>
-                <Input
-                  type="text"
-                  placeholder="e.g. JET-409, AP-802"
-                  value={teamCode}
-                  onChange={(e) => setTeamCode(e.target.value)}
-                  className="w-full"
-                  required
-                />
-              </div>
-            </ModalBody>
-            <ModalFooter>
-              <Button type="submit" className="w-full">
-                Link Team
-              </Button>
-            </ModalFooter>
-          </form>
-        </ModalContent>
-      </Modal>
+
     </PageContainer>
   );
 }
