@@ -452,6 +452,10 @@ async function main() {
         projectTitle: projects[0].title,
         facultyId: facultyA.id,
         projectId: projects[0].id,
+        teamCode: "JTL-2026-A12",
+        maxStudents: 4,
+        status: "ACTIVE",
+        mentorId: facultyA.id,
       },
     }),
     prisma.team.create({
@@ -461,6 +465,10 @@ async function main() {
         projectTitle: projects[1].title,
         facultyId: facultyA.id,
         projectId: projects[1].id,
+        teamCode: "JTL-2026-N34",
+        maxStudents: 4,
+        status: "ACTIVE",
+        mentorId: facultyA.id,
       },
     }),
     prisma.team.create({
@@ -470,6 +478,10 @@ async function main() {
         projectTitle: projects[2].title,
         facultyId: facultyB.id,
         projectId: projects[2].id,
+        teamCode: "JTL-2026-P56",
+        maxStudents: 4,
+        status: "ACTIVE",
+        mentorId: facultyB.id,
       },
     }),
     prisma.team.create({
@@ -479,6 +491,10 @@ async function main() {
         projectTitle: projects[3].title,
         facultyId: facultyB.id,
         projectId: projects[3].id,
+        teamCode: "JTL-2026-O78",
+        maxStudents: 4,
+        status: "ACTIVE",
+        mentorId: facultyB.id,
       },
     }),
   ]);
@@ -543,6 +559,42 @@ async function main() {
       },
     ],
   });
+
+  // Update student records with team assignment details
+  await Promise.all([
+    prisma.user.update({
+      where: { id: students[0].id },
+      data: { teamId: teams[0].id, facultyId: facultyA.id, mentorId: facultyA.id, joinedTeamAt: new Date() },
+    }),
+    prisma.user.update({
+      where: { id: students[1].id },
+      data: { teamId: teams[0].id, facultyId: facultyA.id, mentorId: facultyA.id, joinedTeamAt: new Date() },
+    }),
+    prisma.user.update({
+      where: { id: students[2].id },
+      data: { teamId: teams[1].id, facultyId: facultyA.id, mentorId: facultyA.id, joinedTeamAt: new Date() },
+    }),
+    prisma.user.update({
+      where: { id: students[3].id },
+      data: { teamId: teams[1].id, facultyId: facultyA.id, mentorId: facultyA.id, joinedTeamAt: new Date() },
+    }),
+    prisma.user.update({
+      where: { id: students[4].id },
+      data: { teamId: teams[2].id, facultyId: facultyB.id, mentorId: facultyB.id, joinedTeamAt: new Date() },
+    }),
+    prisma.user.update({
+      where: { id: students[5].id },
+      data: { teamId: teams[2].id, facultyId: facultyB.id, mentorId: facultyB.id, joinedTeamAt: new Date() },
+    }),
+    prisma.user.update({
+      where: { id: students[6].id },
+      data: { teamId: teams[3].id, facultyId: facultyB.id, mentorId: facultyB.id, joinedTeamAt: new Date() },
+    }),
+    prisma.user.update({
+      where: { id: students[7].id },
+      data: { teamId: teams[3].id, facultyId: facultyB.id, mentorId: facultyB.id, joinedTeamAt: new Date() },
+    }),
+  ]);
 
   await prisma.performance.createMany({
     data: [

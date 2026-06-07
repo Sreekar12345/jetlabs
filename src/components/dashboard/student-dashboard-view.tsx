@@ -181,7 +181,7 @@ function statusTone(status: string) {
     return "border-border bg-muted text-foreground";
   }
 
-  return "border-border bg-[#fafafa] text-muted-foreground";
+  return "border-border bg-muted text-muted-foreground";
 }
 
 function commentStatus(index: number) {
@@ -385,7 +385,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                     <Icon className="size-4" />
                   </span>
                 </div>
-                <Progress value={metric.progress} className="h-2 bg-[#f0f0f0]" />
+                <Progress value={metric.progress} className="h-2 bg-muted" />
                 <p className="text-sm leading-6 text-muted-foreground">{metric.helper}</p>
               </CardContent>
             </Card>
@@ -423,7 +423,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                       <div
                         key={tracker.id}
                         className={cn(
-                          "rounded-[8px] border p-4 transition-colors",
+                          "rounded-lg border p-4 transition-colors",
                           statusTone(tracker.status),
                         )}
                       >
@@ -470,11 +470,11 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                     data.welcome.projectCategory || ""
                   );
                   return (
-                    <div className="rounded-[24px] border-0 bg-block-navy p-6 text-white flex flex-col justify-between shadow-none">
+                    <div className="rounded-xl border-0 bg-block-navy p-6 text-white flex flex-col justify-between shadow-none">
                       <div>
                         <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3 mb-4">
                           <div>
-                            <p className="text-xs font-mono uppercase tracking-[0.05em] text-[#c5b0f4]">Active Week Focus</p>
+                            <p className="text-xs font-mono uppercase tracking-[0.05em] text-block-lilac">Active Week Focus</p>
                             <h3 className="text-lg font-bold text-white mt-1 leading-snug font-sans">
                               {focus.title}
                             </h3>
@@ -489,7 +489,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                         </p>
 
                         <div className="space-y-3">
-                          <p className="text-xs font-mono uppercase tracking-[0.05em] text-[#c5b0f4]">Tasks for this week</p>
+                          <p className="text-xs font-mono uppercase tracking-[0.05em] text-block-lilac">Tasks for this week</p>
                           <div className="space-y-2.5">
                             {focus.focus && focus.tasks.map((task, idx) => (
                               <div key={idx} className="flex gap-2 text-xs leading-relaxed text-slate-200">
@@ -535,8 +535,8 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="roadmapFill" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.24} />
-                      <stop offset="95%" stopColor="#f97316" stopOpacity={0.02} />
+                      <stop offset="5%" stopColor="var(--warning, #f97316)" stopOpacity={0.24} />
+                      <stop offset="95%" stopColor="var(--warning, #f97316)" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
@@ -561,7 +561,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                     dataKey="progress"
                     fill="url(#roadmapFill)"
                     name="Progress"
-                    stroke="#f97316"
+                    stroke="var(--warning, #f97316)"
                     strokeWidth={2.4}
                     type="monotone"
                   />
@@ -583,7 +583,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
               const status = commentStatus(index);
 
               return (
-                <div key={feedback.id} className="rounded-[8px] border border-border p-4">
+                <div key={feedback.id} className="rounded-lg border border-border p-4">
                   <div className="flex items-start gap-3">
                     <Avatar className="size-9 border border-border">
                       <AvatarFallback className="bg-muted text-xs font-semibold">
@@ -649,7 +649,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                   <span className="font-medium text-foreground">{row.label}</span>
                   <span className="text-muted-foreground">{row.value}%</span>
                 </div>
-                <Progress value={row.value} className="h-2 bg-[#f0f0f0]" />
+                <Progress value={row.value} className="h-2 bg-muted" />
               </div>
             ))}
           </CardContent>
@@ -677,10 +677,10 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                   tick={{ fill: "#737373", fontSize: 12 }}
                 />
                 <YAxis hide />
-                <Tooltip content={<ChartTooltipContent />} cursor={{ fill: "#f5f5f5" }} />
+                <Tooltip content={<ChartTooltipContent />} cursor={{ fill: "var(--muted)" }} />
                 <Bar
                   dataKey="submitted"
-                  fill="#0f766e"
+                  fill="var(--chart-1, #0f766e)"
                   maxBarSize={34}
                   name="Submissions"
                   radius={[8, 8, 0, 0]}
@@ -695,7 +695,7 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                 ["Streak", data.submissions.length > 0 ? "4w" : "0w"],
                 ["Avg score", averageScore],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-[8px] border border-border bg-muted/40 p-3">
+                <div key={label} className="rounded-lg border border-border bg-muted/40 p-3">
                   <p className="text-xs text-muted-foreground">{label}</p>
                   <p className="mt-1 text-lg font-semibold text-foreground">{value}</p>
                 </div>

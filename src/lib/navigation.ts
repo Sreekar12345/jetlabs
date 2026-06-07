@@ -148,6 +148,13 @@ const FACULTY_NAVIGATION: NavigationSection[] = [
         section: "Management",
       },
       {
+        title: "Student Verification",
+        href: "/faculty/management/student-verification",
+        icon: ClipboardCheck,
+        description: "Verify student profiles and audit academic corrections.",
+        section: "Management",
+      },
+      {
         title: "Teams & Batches",
         href: "/faculty/management/teams-batches",
         icon: Users2,

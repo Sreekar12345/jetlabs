@@ -13,6 +13,13 @@ enum Role {
   ADMIN
 }
 
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  CORRECTION_REQUESTED
+  REJECTED
+}
+
 enum SubmissionType {
   WEEKLY
   FINAL
@@ -94,17 +101,34 @@ model User {
   bookmarks            ProblemBookmark[]
   createdProblems      Problem[]         @relation("ProblemCreator")
   activityEvents       ActivityEvent[]
+  teamId               String?           @map("team_id")
+  mentorId             String?           @map("mentor_id")
+  facultyId            String?           @map("faculty_id")
+  joinedTeamAt         DateTime?         @map("joined_team_at")
+  assignmentRequests   TeamAssignmentRequest[]
+  verificationStatus   VerificationStatus @default(PENDING) @map("verification_status")
+  verifiedBy           String?            @map("verified_by")
+  verifiedAt           DateTime?          @map("verified_at")
+  correctionRequestedAt DateTime?         @map("correction_requested_at")
+  parentPhoneNumber    String?            @map("parent_phone_number")
+  linkedinUrl          String?            @map("linkedin_url")
+  skills               String?            @map("skills")
+  bio                  String?            @map("bio")
 
   @@index([role])
 }
 
 model Team {
   id            String          @id @default(cuid())
-  name          String
+  name          String          @map("team_name")
   batch         String
   projectTitle  String
-  facultyId     String
+  facultyId     String          @map("faculty_id")
   projectId     String          @unique
+  teamCode      String?         @unique @map("team_code")
+  maxStudents   Int             @default(4) @map("max_students")
+  status        String          @default("ACTIVE")
+  mentorId      String?         @map("mentor_id")
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   faculty       User            @relation("FacultyTeams", fields: [facultyId], references: [id], onDelete: Restrict)
@@ -322,4 +346,44 @@ model ActivityEvent {
   @@index([projectId])
   @@index([userId])
   @@index([createdAt])
+}
+
+model TeamAssignmentRequest {
+  id          String   @id @default(cuid())
+  studentId   String   @map("student_id")
+  collegeName String   @map("college_name")
+  department  String
+  section     String
+  facultyName String   @map("faculty_name")
+  notes       String?
+  status      String   @default("pending") // pending, approved, rejected
+  createdAt   DateTime @default(now()) @map("created_at")
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("team_assignment_requests")
+}
+
+model StudentChangeLog {
+  id            String   @id @default(cuid())
+  studentId     String   @map("student_id")
+  fieldName     String   @map("field_name")
+  oldValue      String?  @map("old_value")
+  newValue      String?  @map("new_value")
+  changedBy     String   @map("changed_by")
+  changedByRole String   @map("changed_by_role")
+  reason        String?
+  timestamp     DateTime @default(now())
+
+  @@map("student_change_logs")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  message   String
+  type      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
 }

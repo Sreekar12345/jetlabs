@@ -18,6 +18,7 @@ import {
   HeartPulse,
   Layers3,
   LineChart,
+  Lock,
   Medal,
   MessageSquareText,
   MonitorCheck,
@@ -28,6 +29,9 @@ import {
   Trophy,
   Users2,
   Zap,
+  LoaderCircle,
+  Eye,
+  Edit3
 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -40,6 +44,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { Modal, ModalCloseButton, ModalContent, ModalHeader, ModalTitle } from "@/components/ui/modal";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { VerificationBadge } from "@/features/student-verification/components/VerificationBadge";
 
 type Achievement = {
   id: string;
@@ -71,14 +79,28 @@ type Milestone = {
 
 type ProfileClientProps = {
   user: {
+    id: string;
     name: string;
     email: string;
     avatar?: string | null;
+    phoneNumber?: string | null;
+    parentPhoneNumber?: string | null;
+    linkedinUrl?: string | null;
+    skills?: string | null;
+    bio?: string | null;
+    verificationStatus: "PENDING" | "VERIFIED" | "CORRECTION_REQUESTED" | "REJECTED";
+    verifiedBy?: string | null;
+    verifiedAt?: string | null;
+    correctionRequestedAt?: string | null;
+    rollNumber?: string | null;
+    department?: string | null;
+    batchYear?: string | null;
   };
   performance: {
     score: number;
     attendanceScore: number;
     submissionScore: number;
+    rolePlayScore?: number; // make rolePlayScore optional
     reviewScore: number;
   };
   achievements: Achievement[];
@@ -113,6 +135,47 @@ export function ProfileClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || "");
+  const [parentPhoneNumber, setParentPhoneNumber] = useState(user.parentPhoneNumber || "");
+  const [linkedinUrl, setLinkedinUrl] = useState(user.linkedinUrl || "");
+  const [skills, setSkills] = useState(user.skills || "");
+  const [bio, setBio] = useState(user.bio || "");
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  async function handleSubmitProfile(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingProfile(true);
+
+    try {
+      const res = await fetch("/api/student/profile/update-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: phoneNumber.trim() || null,
+          parentPhoneNumber: parentPhoneNumber.trim() || null,
+          linkedinUrl: linkedinUrl.trim() || null,
+          skills: skills.trim() || null,
+          bio: bio.trim() || null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error?.message || "Failed to update profile details.");
+      }
+
+      toast.success("Profile details updated successfully. Verification request submitted.");
+      setIsEditModalOpen(false);
+      router.refresh();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to update profile details.");
+    } finally {
+      setSavingProfile(false);
+    }
+  }
 
   function handleDiscontinue() {
     startTransition(async () => {
@@ -217,8 +280,50 @@ export function ProfileClient({
     })),
   ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 6);
 
+  const teamName = team?.name ?? "Unassigned";
+
   return (
-    <section className="space-y-8">
+    <section className="space-y-8 text-slate-900">
+      {/* Verification Banners */}
+      {user.verificationStatus === "CORRECTION_REQUESTED" && (
+        <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-850 flex items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="size-5 text-orange-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">Faculty has requested corrections to your profile.</p>
+              <p className="text-[11px] text-orange-700 mt-1">Please update your information to proceed with verification.</p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={() => setIsEditModalOpen(true)}
+            className="h-9 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs border-0 px-4 shadow-sm"
+          >
+            Update Details
+          </Button>
+        </div>
+      )}
+
+      {user.verificationStatus === "PENDING" && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-800 flex items-center gap-3">
+          <AlertTriangle className="size-5 text-amber-600 shrink-0" />
+          <div>
+            <p className="font-semibold">Your profile is awaiting faculty verification.</p>
+            <p className="text-[11px] text-amber-700 mt-0.5">Some features may be restricted until verified.</p>
+          </div>
+        </div>
+      )}
+
+      {user.verificationStatus === "VERIFIED" && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 text-sm text-emerald-855 flex items-center gap-3">
+          <CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
+          <div>
+            <p className="font-semibold">Your profile has been verified.</p>
+            <p className="text-[11px] text-emerald-600 mt-0.5">Core academic fields are locked and can only be modified by faculty.</p>
+          </div>
+        </div>
+      )}
+
       {/* 1. Header Profile block */}
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
         <div className="flex items-center gap-4">
@@ -228,11 +333,14 @@ export function ProfileClient({
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-balance text-3xl font-semibold tracking-tight">{user.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900">{user.name}</h1>
+              <VerificationBadge status={user.verificationStatus} />
+            </div>
             <p className="text-sm text-muted-foreground">{user.email} &middot; Student Profile</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Badge className="border-slate-200 bg-white text-slate-700">{batch}</Badge>
-              <Badge className="border-indigo-200 bg-indigo-50 text-indigo-700">Team: {team?.name ?? "Pending"}</Badge>
+              <Badge className="border-indigo-200 bg-indigo-50 text-indigo-700">Team: {teamName}</Badge>
             </div>
           </div>
         </div>
@@ -241,7 +349,7 @@ export function ProfileClient({
           {headerStats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="rounded-2xl border border-border bg-card p-3 shadow-sm min-w-[120px]">
+              <div key={stat.label} className="rounded-xl border border-border bg-card p-3 shadow-sm min-w-[120px]">
                 <div className="flex items-center gap-2 text-[10px] font-semibold text-muted-foreground uppercase">
                   <Icon className="size-3.5" />
                   {stat.label}
@@ -268,51 +376,112 @@ export function ProfileClient({
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-5">
               <Card>
-                <CardHeader className="border-b border-border pb-5">
-                  <CardTitle className="text-xl">Engineering Profile Details</CardTitle>
-                  <p className="text-xs text-muted-foreground leading-normal">
-                    Student contextual biography, academic interests, and primary focuses.
-                  </p>
+                <CardHeader className="border-b border-slate-200 pb-5 flex flex-row items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-xl text-slate-900">Engineering Profile Details</CardTitle>
+                    <p className="text-xs text-muted-foreground leading-normal mt-1">
+                      Basic student academic metadata, verification status, and contact records.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="h-9 rounded-lg font-semibold text-xs gap-1.5 flex items-center"
+                  >
+                    <Edit3 className="size-3.5" /> Edit Profile
+                  </Button>
                 </CardHeader>
-                <CardContent className="grid gap-4 p-5 md:grid-cols-2">
-                  {[
-                    ["Bio Summary", `Working on applied technology capstone project: ${projectTitle} (${domain}).`],
-                    ["Core Domain", `${domain} & applied engineering execution.`],
-                    ["Team Context", `Active collaborator in ${team?.name ?? "unassigned team"} under mentor ${facultyName}.`],
-                    ["Academic Path", `Completing coursework with ${performance.attendanceScore}% attendance rate.`],
-                  ].map(([label, value]) => (
-                    <div key={label} className="rounded-2xl border border-border bg-muted/20 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-                      <p className="mt-2 text-sm leading-relaxed text-foreground font-medium">{value}</p>
+                <CardContent className="grid gap-4 p-5 md:grid-cols-2 text-slate-900">
+                  {/* Locked Fields */}
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-3">
+                    <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+                      <Lock className="size-3.5 text-slate-400" />
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Locked Academic Info</span>
                     </div>
-                  ))}
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span className="block text-slate-400 font-medium">Roll Number</span>
+                        <span className="font-bold text-slate-700">{user.rollNumber || "Not Provided"}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-400 font-medium">Department</span>
+                        <span className="font-bold text-slate-700">{user.department || "Not Provided"}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-400 font-medium">Batch</span>
+                        <span className="font-bold text-slate-700">{user.batchYear || "Not Provided"}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-400 font-medium">College Email</span>
+                        <span className="font-bold text-slate-700 truncate block" title={user.email}>{user.email}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-400 font-medium">Team Context</span>
+                        <span className="font-bold text-slate-700">{teamName}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-400 font-medium">Faculty Advisor</span>
+                        <span className="font-bold text-slate-700">{facultyName}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Editable Fields */}
+                  <div className="rounded-xl border border-slate-150 bg-white p-4 space-y-3">
+                    <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+                      <Edit3 className="size-3.5 text-indigo-500" />
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Contact &amp; Profile Details</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span className="block text-slate-400 font-medium">Student Mobile</span>
+                        <span className="font-bold text-slate-700">{user.phoneNumber || "Not Provided"}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-400 font-medium">Parent Mobile</span>
+                        <span className="font-bold text-slate-700">{user.parentPhoneNumber || "Not Provided"}</span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="block text-slate-400 font-medium">LinkedIn URL</span>
+                        <span className="font-bold text-slate-700 truncate block">
+                          {user.linkedinUrl ? (
+                            <a href={user.linkedinUrl} target="_blank" rel="noreferrer" className="text-indigo-650 hover:underline">
+                              {user.linkedinUrl}
+                            </a>
+                          ) : "Not Provided"}
+                        </span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="block text-slate-400 font-medium">Bio</span>
+                        <span className="font-semibold text-slate-650 block leading-normal mt-0.5">
+                          {user.bio || "No biography added yet."}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="border-b border-border pb-5">
-                  <CardTitle className="text-xl">Dynamic Skills & Verification</CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    Tracked technical competencies mapped dynamically based on selected project.
+                  <CardTitle className="text-xl text-slate-900">Dynamic Skills &amp; Verification</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your key technical expertise and verification status.
                   </p>
                 </CardHeader>
-                <CardContent className="space-y-5 p-5">
-                  {skillsList.map((skill) => (
-                    <div key={skill.label} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground">{skill.label}</span>
-                          {skill.verified && (
-                            <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]">
-                              Verified
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-xs text-muted-foreground">{skill.value}%</span>
-                      </div>
-                      <Progress value={skill.value} className="h-1.5 bg-slate-200" />
+                <CardContent className="space-y-4 p-5 text-slate-900">
+                  {user.skills ? (
+                    <div className="flex flex-wrap gap-2">
+                      {user.skills.split(",").map((s) => (
+                        <Badge key={s} className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs px-2.5 py-1">
+                          {s.trim()}
+                        </Badge>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <p className="text-xs text-muted-foreground py-4 text-center">No skills mapped yet. Click Edit Profile to add skills.</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -362,7 +531,7 @@ export function ProfileClient({
                     <p className="text-xs text-muted-foreground text-center py-4">No verified achievements yet.</p>
                   ) : (
                     achievements.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-border bg-muted/20 px-3 py-2.5 text-xs font-semibold">
+                      <div key={item.id} className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 px-3 py-2.5 text-xs font-semibold">
                         <Trophy className="size-4 text-amber-500 shrink-0" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-foreground font-semibold">{item.title}</p>
@@ -502,13 +671,127 @@ export function ProfileClient({
         </TabsContent>
       </Tabs>
 
+      {/* 4. Edit Profile details Modal */}
+      <Modal open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <ModalContent className="max-w-md p-6 bg-white rounded-2xl shadow-xl text-slate-900">
+          <ModalHeader className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+            <ModalTitle className="text-lg font-bold text-slate-900">
+              Edit Profile Details
+            </ModalTitle>
+            <ModalCloseButton onClick={() => setIsEditModalOpen(false)} />
+          </ModalHeader>
+
+          <form onSubmit={handleSubmitProfile} className="space-y-4">
+            <div className="space-y-1">
+              <label htmlFor="phoneNumber" className="text-xs font-bold text-slate-705">
+                Student Mobile Number
+              </label>
+              <Input
+                id="phoneNumber"
+                type="text"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="e.g. +91 9876543210"
+                disabled={savingProfile}
+                className="h-10 rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="parentPhoneNumber" className="text-xs font-bold text-slate-705">
+                Parent Mobile Number *
+              </label>
+              <Input
+                id="parentPhoneNumber"
+                type="text"
+                value={parentPhoneNumber}
+                onChange={(e) => setParentPhoneNumber(e.target.value)}
+                placeholder="e.g. +91 9988776655"
+                disabled={savingProfile}
+                required
+                className="h-10 rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="linkedinUrl" className="text-xs font-bold text-slate-705">
+                LinkedIn Profile URL
+              </label>
+              <Input
+                id="linkedinUrl"
+                type="text"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                placeholder="e.g. https://linkedin.com/in/username"
+                disabled={savingProfile}
+                className="h-10 rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="skills" className="text-xs font-bold text-slate-705">
+                Technical Skills (comma-separated)
+              </label>
+              <Input
+                id="skills"
+                type="text"
+                value={skills}
+                onChange={(e) => setSkills(e.target.value)}
+                placeholder="e.g. Python, React, TensorFlow, PostgreSQL"
+                disabled={savingProfile}
+                className="h-10 rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="bio" className="text-xs font-bold text-slate-705">
+                Biography / Interests
+              </label>
+              <Textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Briefly describe your academic or project interests..."
+                disabled={savingProfile}
+                className="min-h-[80px] rounded-xl text-slate-905"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={savingProfile}
+                onClick={() => setIsEditModalOpen(false)}
+                className="h-10 rounded-xl font-semibold px-4 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={savingProfile}
+                className="h-10 rounded-xl font-semibold bg-indigo-650 hover:bg-indigo-700 text-white shadow-md px-5 border-0 text-xs"
+              >
+                {savingProfile ? (
+                  <>
+                    <LoaderCircle className="size-3.5 animate-spin mr-1.5" /> Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </div>
+          </form>
+        </ModalContent>
+      </Modal>
+
       {isConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => !isPending && setIsConfirmOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-border bg-white shadow-2xl transition-all animate-in fade-in zoom-in duration-200">
+          <div className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-border bg-white shadow-2xl transition-all animate-in fade-in zoom-in duration-200">
             <div className="p-6">
               <div className="flex size-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
                 <AlertTriangle className="size-6 animate-pulse" />
@@ -561,3 +844,4 @@ export function ProfileClient({
     </section>
   );
 }
+

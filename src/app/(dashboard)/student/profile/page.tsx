@@ -65,9 +65,22 @@ export default async function StudentProfilePage() {
   return (
     <ProfileClient
       user={{
+        id: user.id,
         name: user.name,
         email: user.email,
         avatar: user.avatar,
+        phoneNumber: user.phoneNumber,
+        parentPhoneNumber: user.parentPhoneNumber,
+        linkedinUrl: user.linkedinUrl,
+        skills: user.skills,
+        bio: user.bio,
+        verificationStatus: user.verificationStatus,
+        verifiedBy: user.verifiedBy,
+        verifiedAt: user.verifiedAt ? user.verifiedAt.toISOString() : null,
+        correctionRequestedAt: user.correctionRequestedAt ? user.correctionRequestedAt.toISOString() : null,
+        rollNumber: user.rollNumber,
+        department: user.department,
+        batchYear: user.batchYear,
       }}
       performance={performance}
       achievements={JSON.parse(JSON.stringify(achievements))}

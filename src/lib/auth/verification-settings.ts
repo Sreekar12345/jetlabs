@@ -1,0 +1,1 @@
+export const REQUIRE_VERIFICATION_BEFORE_ACCESS = true;

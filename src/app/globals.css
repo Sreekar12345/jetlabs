@@ -122,8 +122,12 @@
   --color-chart-5: var(--chart-5);
   --radius-sm: 6px;
   --radius-md: 8px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+
+  --shadow-sm: 0 4px 20px -4px rgba(15, 23, 42, 0.06);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

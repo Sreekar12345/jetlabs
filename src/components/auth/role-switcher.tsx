@@ -63,7 +63,7 @@ export function RoleSwitcher({
       role="radiogroup"
       aria-label={ariaLabel}
       className={cn(
-        "grid gap-2 rounded-[24px] border border-border bg-muted p-1.5",
+        "grid gap-1 rounded-xl border border-slate-200/60 bg-slate-100/80 p-1",
         options.length === 3 ? "grid-cols-3" : "grid-cols-2",
         className,
       )}
@@ -85,16 +85,13 @@ export function RoleSwitcher({
             onClick={() => onValueChange(option.value)}
             onKeyDown={(event) => handleKeyDown(event, index)}
             className={cn(
-              "rounded-[18px] border px-4 py-3 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "rounded-lg py-2.5 text-center text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600/20",
               isActive
-                ? "border-black bg-black text-white shadow-none"
-                : "border-transparent text-black/60 hover:bg-white hover:text-black",
+                ? "bg-white text-indigo-600 shadow-sm border border-slate-200/20"
+                : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-white/40",
             )}
           >
-            <span className="block text-sm font-semibold">{option.label}</span>
-            <span className="mt-1 block text-xs leading-5 opacity-80">
-              {option.description}
-            </span>
+            {option.label}
           </button>
         );
       })}

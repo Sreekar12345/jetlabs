@@ -189,24 +189,24 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
             onClick={() => setIsCreateModalOpen(true)}
             variant="outline"
             size="sm"
-            className="rounded-full border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
+            className="border-border text-foreground bg-white hover:bg-accent"
           >
             <Plus className="size-4 mr-2" />
             Create a team
           </Button>
-          <Button variant="outline" size="sm" asChild className="rounded-full border-slate-200 text-slate-700 bg-white hover:bg-slate-50">
+          <Button variant="outline" size="sm" asChild className="border-border text-foreground bg-white hover:bg-accent">
             <Link href="/faculty/management/teams-batches">
               <Users2 className="size-4 mr-2" />
               View teams
             </Link>
           </Button>
-          <Button variant="outline" size="sm" asChild className="rounded-full border-slate-200 text-slate-700 bg-white hover:bg-slate-50">
+          <Button variant="outline" size="sm" asChild className="border-border text-foreground bg-white hover:bg-accent">
             <Link href="/faculty/management/students">
               <Users className="size-4 mr-2" />
               Students
             </Link>
           </Button>
-          <Button size="sm" asChild className="rounded-full bg-black text-white hover:bg-black/90 border-0">
+          <Button size="sm" asChild>
             <Link href="/faculty/review/review-queue">
               <ClipboardCheck className="size-4 mr-2" />
               Review queue (22)
@@ -220,7 +220,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         {/* Column 1: Vertical Stack of Total Students (C1) and Critical Backlogs (C5) */}
         <div className="flex flex-col gap-4">
           {/* Card 1: Total Students */}
-          <Card className="rounded-2xl shadow-sm border border-slate-100 bg-white flex-1 flex flex-col justify-between p-4 h-[100px]">
+          <Card className="flex-1 flex flex-col justify-between p-4 h-[100px]">
             <div className="flex items-start justify-between">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{c1.label}</span>
               <Users className="size-4 text-slate-400" />
@@ -232,7 +232,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
           </Card>
           
           {/* Card 5: Critical Backlogs */}
-          <Card className="rounded-2xl shadow-sm border border-slate-100 bg-white flex-1 flex flex-col justify-between p-4 h-[100px]">
+          <Card className="flex-1 flex flex-col justify-between p-4 h-[100px]">
             <div className="flex items-start justify-between">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{c5.label}</span>
               <AlertTriangle className="size-4 text-slate-400" />
@@ -245,7 +245,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         </div>
 
         {/* Column 2: Below 75% Attendance (C2) */}
-        <Card className={cn("rounded-2xl shadow-sm border p-5 flex flex-col justify-between h-[216px]", getMetricStyles(c2.tone).border)}>
+        <Card className={cn("p-5 flex flex-col justify-between h-[216px]", getMetricStyles(c2.tone).border)}>
           <div className="flex items-start justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider leading-relaxed max-w-[80%]">{c2.label}</span>
             <span className={cn("p-1.5 rounded-lg", getMetricStyles(c2.tone).bgLight)}>
@@ -259,7 +259,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         </Card>
 
         {/* Column 3: Critical Attendance (C3) */}
-        <Card className={cn("rounded-2xl shadow-sm border p-5 flex flex-col justify-between h-[216px]", getMetricStyles(c3.tone).border)}>
+        <Card className={cn("p-5 flex flex-col justify-between h-[216px]", getMetricStyles(c3.tone).border)}>
           <div className="flex items-start justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider leading-relaxed max-w-[80%]">{c3.label}</span>
             <span className={cn("p-1.5 rounded-lg", getMetricStyles(c3.tone).bgLight)}>
@@ -273,7 +273,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         </Card>
 
         {/* Column 4: Students with Backlogs (C4) */}
-        <Card className={cn("rounded-2xl shadow-sm border p-5 flex flex-col justify-between h-[216px]", getMetricStyles(c4.tone).border)}>
+        <Card className={cn("p-5 flex flex-col justify-between h-[216px]", getMetricStyles(c4.tone).border)}>
           <div className="flex items-start justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider leading-relaxed max-w-[80%]">{c4.label}</span>
             <span className={cn("p-1.5 rounded-lg", getMetricStyles(c4.tone).bgLight)}>
@@ -290,7 +290,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
       {/* Row 2: Bottom row of 4 metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Card 6: Pending Reviews */}
-        <Card className={cn("rounded-2xl shadow-sm border p-5 flex flex-col justify-between h-[180px]", getMetricStyles(c6.tone).border)}>
+        <Card className={cn("p-5 flex flex-col justify-between h-[180px]", getMetricStyles(c6.tone).border)}>
           <div className="flex items-start justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider leading-relaxed max-w-[85%]">{c6.label}</span>
             <span className={cn("p-1.5 rounded-lg", getMetricStyles(c6.tone).bgLight)}>
@@ -304,7 +304,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         </Card>
 
         {/* Card 7: Delayed Teams */}
-        <Card className={cn("rounded-2xl shadow-sm border p-5 flex flex-col justify-between h-[180px]", getMetricStyles(c7.tone).border)}>
+        <Card className={cn("p-5 flex flex-col justify-between h-[180px]", getMetricStyles(c7.tone).border)}>
           <div className="flex items-start justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider leading-relaxed max-w-[85%]">{c7.label}</span>
             <span className={cn("p-1.5 rounded-lg", getMetricStyles(c7.tone).bgLight)}>
@@ -318,7 +318,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         </Card>
 
         {/* Card 8: IEEE Paper Delays */}
-        <Card className={cn("rounded-2xl shadow-sm border p-5 flex flex-col justify-between h-[180px]", getMetricStyles(c8.tone).border)}>
+        <Card className={cn("p-5 flex flex-col justify-between h-[180px]", getMetricStyles(c8.tone).border)}>
           <div className="flex items-start justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider leading-relaxed max-w-[85%]">{c8.label}</span>
             <span className={cn("p-1.5 rounded-lg", getMetricStyles(c8.tone).bgLight)}>
@@ -332,7 +332,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         </Card>
 
         {/* Card 9: High-Risk Students */}
-        <Card className={cn("rounded-2xl shadow-sm border p-5 flex flex-col justify-between h-[180px]", getMetricStyles(c9.tone).border)}>
+        <Card className={cn("p-5 flex flex-col justify-between h-[180px]", getMetricStyles(c9.tone).border)}>
           <div className="flex items-start justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider leading-relaxed max-w-[85%]">{c9.label}</span>
             <span className={cn("p-1.5 rounded-lg", getMetricStyles(c9.tone).bgLight)}>
@@ -349,7 +349,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
       {/* 4. Split Layout - Weekly Throughput + Batches */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Weekly Submission Throughput (Recharts Line Chart) */}
-        <Card className="rounded-2xl shadow-sm border border-slate-100 bg-white lg:col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold text-slate-800">Weekly submission throughput</CardTitle>
             <p className="text-xs text-slate-400 mt-1">Submissions vs approvals across all batches</p>
@@ -388,18 +388,18 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
                     type="monotone"
                     dataKey="submitted"
                     name="submissions"
-                    stroke="#ea580c"
+                    stroke="var(--warning, #ea580c)"
                     strokeWidth={2}
-                    dot={{ fill: "#ea580c", r: 4, strokeWidth: 0 }}
+                    dot={{ fill: "var(--warning, #ea580c)", r: 4, strokeWidth: 0 }}
                     activeDot={{ r: 6 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="reviewed"
                     name="approved"
-                    stroke="#0d9488"
+                    stroke="var(--chart-1, #0d9488)"
                     strokeWidth={2}
-                    dot={{ fill: "#0d9488", r: 4, strokeWidth: 0 }}
+                    dot={{ fill: "var(--chart-1, #0d9488)", r: 4, strokeWidth: 0 }}
                     activeDot={{ r: 6 }}
                   />
                   <Legend
@@ -416,7 +416,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         </Card>
 
         {/* Right Column: Batches Live Progress List */}
-        <Card className="rounded-2xl shadow-sm border border-slate-100 bg-white">
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold text-slate-800">Batches</CardTitle>
             <p className="text-xs text-slate-400 mt-1">Live progress snapshot</p>
@@ -452,7 +452,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
       </div>
 
       {/* 5. Needs Attention Section */}
-      <Card className="rounded-2xl shadow-sm border border-slate-100 bg-white">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-bold text-slate-800">Needs attention</CardTitle>
           <p className="text-xs text-slate-400 mt-1">Inactive teams & overdue work</p>

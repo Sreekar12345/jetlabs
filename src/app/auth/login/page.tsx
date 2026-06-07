@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { AuthHero } from "@/components/auth/auth-hero";
 import { LoginForm } from "@/components/auth/login-form";
 import { getDefaultDashboardPath } from "@/lib/auth/routing";
 import { getAuthSession, getSessionUserRole } from "@/lib/auth/session";
@@ -23,18 +22,21 @@ export default async function AuthLoginPage({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
 
   return (
-    <main className="grid min-h-screen bg-[#f7f7f5] lg:grid-cols-[1.05fr_0.95fr]">
-      <AuthHero />
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f7f7f5]">
-        <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(black_1px,transparent_1px),linear-gradient(90deg,black_1px,transparent_1px)] [background-size:32px_32px]" />
-        <div className="relative z-10 w-full">
-          <LoginForm
-            callbackUrl={
-              getSingleSearchParam(resolvedSearchParams?.callbackUrl) ?? null
-            }
-            reason={getSingleSearchParam(resolvedSearchParams?.reason) ?? null}
-          />
-        </div>
+    <main className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-4 py-12 sm:px-6 lg:px-8">
+      <div 
+        className="w-full max-w-[420px]"
+        style={{
+          "--primary": "#4F46E5",
+          "--primary-foreground": "#ffffff",
+          "--ring": "#4F46E5",
+        } as React.CSSProperties}
+      >
+        <LoginForm
+          callbackUrl={
+            getSingleSearchParam(resolvedSearchParams?.callbackUrl) ?? null
+          }
+          reason={getSingleSearchParam(resolvedSearchParams?.reason) ?? null}
+        />
       </div>
     </main>
   );
