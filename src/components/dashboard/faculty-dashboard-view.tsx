@@ -153,7 +153,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
           name: "",
         });
       } else {
-        toast.error(response.message);
+        toast.error(response.error);
       }
     });
   };

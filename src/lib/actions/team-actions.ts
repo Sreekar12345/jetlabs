@@ -21,18 +21,25 @@ export async function createTeamAction(input: unknown) {
   if (!parsed.success) {
     return {
       success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid team creation payload.",
       message: parsed.error.issues[0]?.message ?? "Invalid team creation payload.",
     };
   }
 
   const { name, studentNames } = parsed.data;
+  const teamName = name;
   const domain = "General"; // Default domain
   const batch = "2026-A"; // Default batch
   const difficulty = "BEGINNER"; // Default difficulty level
-  const projectTitle = `${name} Project`;
+  const projectTitle = `${teamName} Project`;
   const projectDescription = `Research and development for ${domain} engineering applications.`;
   const facultyId = session.user.id;
   const facultyName = session.user.name || "Faculty Mentor";
+
+  console.log("Starting team creation");
+  console.log("Faculty ID:", facultyId);
+  console.log("Team Name:", teamName);
+  console.log("Student Names:", studentNames);
 
   try {
     const passwordHash = await hash("Syntra123", 12);
@@ -54,12 +61,12 @@ export async function createTeamAction(input: unknown) {
       // Generate a unique team code
       const teamCode = await generateUniqueTeamCode(tx);
       console.log("Generated Team Code:", teamCode);
-      console.log("Saving Team:", name);
+      console.log("Saving Team:", teamName);
 
       // 2. Create Team
       const team = await tx.team.create({
         data: {
-          name,
+          name: teamName,
           batch,
           projectTitle: project.title,
           facultyId,
@@ -68,16 +75,16 @@ export async function createTeamAction(input: unknown) {
         },
       });
 
-      console.log("Created Team:", team.id);
+      console.log("Team Created:", team.id);
 
-      // 2b. Look up or create students by name and add memberships
+      // 2b. Look up existing students and add memberships (throw error if not found)
       if (studentNames && studentNames.length > 0) {
         for (const rawName of studentNames) {
           const trimmedName = rawName.trim();
           if (!trimmedName) continue;
 
           // Look up existing student
-          let studentUser = await tx.user.findFirst({
+          const studentUser = await tx.user.findFirst({
             where: {
               role: "STUDENT",
               name: {
@@ -87,31 +94,9 @@ export async function createTeamAction(input: unknown) {
             },
           });
 
-          // Create new student user if not found
+          // Throw error if student does not exist
           if (!studentUser) {
-            const cleanName = trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, ".");
-            const defaultEmail = `${cleanName}@syntra.edu`;
-            let finalEmail = defaultEmail;
-            let emailCount = 1;
-
-            // Make sure the email is unique
-            while (true) {
-              const existingEmail = await tx.user.findUnique({
-                where: { email: finalEmail },
-              });
-              if (!existingEmail) break;
-              finalEmail = `${cleanName}${emailCount}@syntra.edu`;
-              emailCount++;
-            }
-
-            studentUser = await tx.user.create({
-              data: {
-                name: trimmedName,
-                email: finalEmail,
-                role: "STUDENT",
-                passwordHash,
-              },
-            });
+            throw new Error(`Student "${trimmedName}" not found.`);
           }
 
           // Create membership
@@ -124,6 +109,8 @@ export async function createTeamAction(input: unknown) {
           });
         }
       }
+
+      console.log("Team Members Added");
 
       // 3. Initialize standard Milestones
       await tx.projectMilestone.createMany({
@@ -185,6 +172,8 @@ export async function createTeamAction(input: unknown) {
         ],
       });
 
+      console.log("Default Milestones Created");
+
       // 4. Create an activity event
       await tx.activityEvent.create({
         data: {
@@ -193,11 +182,14 @@ export async function createTeamAction(input: unknown) {
           userId: facultyId,
           type: "milestone",
           title: "Team Created",
-          detail: `${facultyName} created team "${name}" with project "${projectTitle}".`,
+          detail: `${facultyName} created team "${teamName}" with project "${projectTitle}".`,
         },
       });
 
       return { team, project };
+    }, {
+      maxWait: 15000,
+      timeout: 30000,
     });
 
     // Revalidate paths
@@ -218,10 +210,11 @@ export async function createTeamAction(input: unknown) {
       teamCode: result.team.teamCode,
     };
   } catch (error) {
-    console.error("Failed to create team:", error);
+    console.error("TEAM CREATION ERROR:", error);
     return {
       success: false,
-      message: "An error occurred while creating your team.",
+      error: error instanceof Error ? error.message : "Unknown team creation error",
+      message: error instanceof Error ? error.message : "Unknown team creation error",
     };
   }
 }
