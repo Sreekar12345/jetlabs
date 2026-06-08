@@ -171,10 +171,7 @@ export async function loginWithEmailPassword(
       return {
         success: false,
         code: "INVALID_CREDENTIALS",
-        message:
-          result.error === "CredentialsSignin"
-            ? "Invalid email, password, or role."
-            : result.error,
+        message: "Invalid Credentials",
         status: 401,
       };
     }

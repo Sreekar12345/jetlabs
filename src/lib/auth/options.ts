@@ -57,8 +57,7 @@ export const authOptions: NextAuthOptions = {
         console.log("Password valid. Comparing roles...");
         if (user.role !== parsed.data.role) {
           console.log("Role comparison failed: DB role", user.role, "!= Parsed role", parsed.data.role);
-          const roleLabel = parsed.data.role === "ADMIN" ? "admin" : parsed.data.role.toLowerCase();
-          throw new Error(`This account is not registered as ${roleLabel}`);
+          throw new Error("Invalid Credentials");
         }
 
         console.log("Authorize successful for user:", user.email);
