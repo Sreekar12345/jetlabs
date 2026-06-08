@@ -102,6 +102,22 @@ export async function selectProblemAsProjectAction(input: unknown) {
 
     // 4. Create Project, Team, and TeamMember in a transaction
     const result = await db.$transaction(async (tx: any) => {
+      // 4a. Verify that the student user actually exists in the database to prevent fkey violations
+      const studentUser = await tx.user.findUnique({
+        where: { id: userId },
+      });
+      if (!studentUser) {
+        throw new Error("Student account not found in database. Please log out and sign back in.");
+      }
+
+      // 4b. Verify that the faculty advisor actually exists in the database
+      const facultyUser = await tx.user.findUnique({
+        where: { id: faculty.id },
+      });
+      if (!facultyUser) {
+        throw new Error("Assigned faculty advisor not found in database. Please contact support.");
+      }
+
       // Create Project
       const project = await tx.project.create({
         data: {
@@ -140,6 +156,17 @@ export async function selectProblemAsProjectAction(input: unknown) {
           roleLabel: "Lead",
           contributionScore: 100,
           lastActiveAt: new Date(),
+        },
+      });
+
+      // Synchronize the student's User record direct fields to match the team assignment and prevent data drift
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          teamId: team.id,
+          facultyId: faculty.id,
+          mentorId: faculty.id, // Set the default faculty advisor as mentor
+          joinedTeamAt: new Date(),
         },
       });
 

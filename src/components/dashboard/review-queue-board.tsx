@@ -36,140 +36,22 @@ const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const MOCK_QUEUE_ITEMS: ReviewQueueItem[] = [
-  {
-    id: "mock-falcon",
-    team: "Team Falcon",
-    batch: "CSE-A",
-    project: "Frontend prototype + model integration",
-    submissionTitle: "Frontend prototype + model integration",
-    submittedAt: "2h ago",
-    status: "Pending",
-    urgency: "Medium",
-    preview:
-      "Built React frontend with image upload + result page. Integrated FastAPI backend for predictions. Added drag-and-drop and caching. Documented API in README.",
-    rubric: ["React", "FastAPI", "Web App"],
-    scoreHint: "90 / 100",
-  },
-  {
-    id: "mock-vega",
-    team: "Team Vega",
-    batch: "AIML",
-    project: "Tumor segmentation results",
-    submissionTitle: "Tumor segmentation results",
-    submittedAt: "5h ago",
-    status: "Pending",
-    urgency: "High",
-    preview:
-      "Implemented 3D U-Net model for MRI tumor segmentation. Prepared validation reports and dataset normalization scripts. Added visualization tools using three.js.",
-    rubric: ["U-Net", "PyTorch", "Medical"],
-    scoreHint: "85 / 100",
-  },
-  {
-    id: "mock-atlas",
-    team: "Team Atlas",
-    batch: "DS",
-    project: "Sentiment model v3",
-    submissionTitle: "Sentiment model v3",
-    submittedAt: "1d ago",
-    status: "Pending",
-    urgency: "Low",
-    preview:
-      "Deploys sentiment model v3 using DistilRoBERTa. Configured Docker container and AWS ECS pipelines. Set up Prometheus and Grafana for model drift tracking.",
-    rubric: ["Transformers", "AWS", "MLOps"],
-    scoreHint: "95 / 100",
-  },
-  {
-    id: "mock-nova",
-    team: "Team Nova",
-    batch: "CSE-A",
-    project: "Fraud detection feature engineering",
-    submissionTitle: "Fraud detection feature engineering",
-    submittedAt: "2d ago",
-    status: "Pending",
-    urgency: "Medium",
-    preview:
-      "Engineered 45 new features from transactional datasets. Built initial XGBoost baseline. Created feature store sync pipelines.",
-    rubric: ["XGBoost", "Feature Store", "Finance"],
-    scoreHint: "78 / 100",
-  },
-];
-
-const MOCK_SUBMISSION_DETAILS: Record<
-  string,
-  {
-    github: string;
-    commits: number;
-    deploy: string;
-    status: string;
-    summary: string;
-    attachments: string[];
-  }
-> = {
-  "Team Falcon": {
-    github: "github.com/team/proj",
-    commits: 14,
-    deploy: "proj.vercel.app",
-    status: "200 OK",
-    summary:
-      "Built React frontend with image upload + result page. Integrated FastAPI backend for predictions. Added drag-and-drop and caching. Documented API in README.",
-    attachments: ["screenshot-1.png", "screenshot-2.png", "architecture.png", "demo.mp4"],
-  },
-  "Team Vega": {
-    github: "github.com/vega/tumor-seg",
-    commits: 18,
-    deploy: "tumor-seg.vercel.app",
-    status: "200 OK",
-    summary:
-      "Implemented 3D U-Net model for MRI tumor segmentation. Prepared validation reports and dataset normalization scripts. Added visualization tools using three.js.",
-    attachments: ["validation_report.pdf", "mri_sample.png", "threejs_ui.png"],
-  },
-  "Team Atlas": {
-    github: "github.com/atlas/sentiment",
-    commits: 22,
-    deploy: "sentiment-v3.vercel.app",
-    status: "200 OK",
-    summary:
-      "Deploys sentiment model v3 using DistilRoBERTa. Configured Docker container and AWS ECS pipelines. Set up Prometheus and Grafana for model drift tracking.",
-    attachments: ["architecture.png", "grafana_metrics.png", "docker-compose.yml"],
-  },
-  "Team Nova": {
-    github: "github.com/nova/fraud-det",
-    commits: 12,
-    deploy: "fraud-nova.vercel.app",
-    status: "502 Bad Gateway",
-    summary:
-      "Engineered 45 new features from transactional datasets. Built initial XGBoost baseline. Created feature store sync pipelines.",
-    attachments: ["features_list.xlsx", "xgboost_baseline.ipynb"],
-  },
-};
-
 function getSubmissionDetails(teamName: string, item: ReviewQueueItem) {
-  const normalized = teamName.trim();
-  if (MOCK_SUBMISSION_DETAILS[normalized]) {
-    return MOCK_SUBMISSION_DETAILS[normalized];
-  }
-
-  const slug = normalized.toLowerCase().replace(/\s+/g, "-");
+  const slug = teamName.trim().toLowerCase().replace(/\s+/g, "-");
   return {
     github: `github.com/${slug}/project`,
-    commits: 15,
+    commits: 0,
     deploy: `${slug}.vercel.app`,
-    status: "200 OK",
+    status: "N/A",
     summary: item.preview || "No summary provided by the team.",
-    attachments: ["screenshot.png", "architecture.png"],
+    attachments: [] as string[],
   };
-}
-
-function getWeekForTeam(teamName: string) {
-  if (teamName.includes("Nova")) return "Week 3";
-  return "Week 4";
 }
 
 export function ReviewQueueBoard({ initialData }: { initialData: ReviewQueueData }) {
   const router = useRouter();
   const [selectedReview, setSelectedReview] = useState<ReviewQueueItem | null>(null);
-  const [mockQueue, setMockQueue] = useState<ReviewQueueItem[]>(MOCK_QUEUE_ITEMS);
+
   const [isPending, startTransition] = useTransition();
 
   const [execution, setExecution] = useState(8);
@@ -180,12 +62,8 @@ export function ReviewQueueBoard({ initialData }: { initialData: ReviewQueueData
   const [commentsText, setCommentsText] = useState("");
 
   const pendingQueue = useMemo(() => {
-    const dbPending = initialData.queue.filter((item) => item.status === "Pending");
-    const uniqueMocks = mockQueue.filter(
-      (mock) => !dbPending.some((db) => db.team === mock.team)
-    );
-    return [...uniqueMocks, ...dbPending];
-  }, [initialData.queue, mockQueue]);
+    return initialData.queue.filter((item) => item.status === "Pending");
+  }, [initialData.queue]);
 
   const activeReview = selectedReview || pendingQueue[0] || null;
 
@@ -238,12 +116,6 @@ export function ReviewQueueBoard({ initialData }: { initialData: ReviewQueueData
     const comments = commentsText.trim() || "Review submitted.";
 
     startTransition(async () => {
-      if (activeReview.id.startsWith("mock-")) {
-        toast.success("Review submitted successfully (simulated for mockup).");
-        setMockQueue((prev) => prev.filter((item) => item.id !== activeReview.id));
-        setSelectedReview(null);
-        return;
-      }
 
       const result = await submitReviewAction({
         comments,
@@ -262,7 +134,7 @@ export function ReviewQueueBoard({ initialData }: { initialData: ReviewQueueData
     });
   }
 
-  const pendingCount = initialData.queue.length === 0 ? 22 : pendingQueue.length;
+  const pendingCount = pendingQueue.length;
 
   return (
     <div className="space-y-6 bg-[#f8fafc] -mx-4 -my-6 p-4 sm:p-6 lg:p-8 xl:p-10 min-h-[calc(100vh-4.5rem)] text-slate-950">
@@ -318,7 +190,7 @@ export function ReviewQueueBoard({ initialData }: { initialData: ReviewQueueData
                       </span>
                     </div>
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      {item.batch} · {getWeekForTeam(item.team)}
+                      {item.batch}
                     </p>
                     <p className="text-xs text-slate-500 font-semibold truncate">
                       {item.submissionTitle}
@@ -354,7 +226,7 @@ export function ReviewQueueBoard({ initialData }: { initialData: ReviewQueueData
                     </div>
                     <div>
                       <h2 className="text-lg font-semibold text-slate-900">
-                        {activeReview.team} - {getWeekForTeam(activeReview.team)}
+                        {activeReview.team}
                       </h2>
                       <p className="text-sm text-slate-550 font-medium mt-0.5">
                         {activeReview.submissionTitle}

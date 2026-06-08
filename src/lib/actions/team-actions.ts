@@ -120,6 +120,17 @@ export async function createTeamAction(input: unknown) {
               roleLabel: "Member",
             },
           });
+
+          // Synchronize direct User record fields to maintain architecture alignment and prevent data drift
+          await tx.user.update({
+            where: { id: studentUser.id },
+            data: {
+              teamId: team.id,
+              facultyId: facultyId,
+              mentorId: facultyId, // Assigned faculty acts as default mentor
+              joinedTeamAt: new Date(),
+            },
+          });
         }
       }
 

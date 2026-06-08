@@ -41,13 +41,7 @@ const percentileData = [
   { band: "Critical", value: 39 },
 ];
 
-const leaderboard = [
-  { name: "Aarav Nair", dept: "CSE", score: 94, momentum: "+6", research: 18, attendance: 95, backlog: "Low", consistency: 91, action: "Assign mentor" },
-  { name: "Meera Iyer", dept: "Research", score: 91, momentum: "+4", research: 15, attendance: 92, backlog: "Low", consistency: 89, action: "Generate report" },
-  { name: "Rohan Shah", dept: "AI", score: 89, momentum: "+3", research: 13, attendance: 90, backlog: "Moderate", consistency: 86, action: "Schedule review" },
-  { name: "Sara Khan", dept: "ECE", score: 72, momentum: "-1", research: 8, attendance: 76, backlog: "High", consistency: 68, action: "Flag intervention" },
-  { name: "Nikhil Rao", dept: "Math", score: 66, momentum: "-3", research: 5, attendance: 71, backlog: "Critical", consistency: 61, action: "Escalate" },
-];
+const leaderboard: { name: string; dept: string; score: number; momentum: string; research: number; attendance: number; backlog: string; consistency: number; action: string }[] = [];
 
 const momentumData = [
   { month: "Jan", score: 68 },

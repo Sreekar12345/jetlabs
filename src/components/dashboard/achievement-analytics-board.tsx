@@ -40,142 +40,17 @@ type AchievementStudent = {
   batch: string;
 };
 
-// Initial Dataset containing students and their accolades
-const ACHIEVEMENT_STUDENTS: AchievementStudent[] = [
-  {
-    name: "Riya Kapoor",
-    roll: "21DS009",
-    dept: "Data Science",
-    initials: "RK",
-    items: 8,
-    points: 36,
-    research: 2,
-    national: 5,
-    batch: "Batch 2022",
-  },
-  {
-    name: "Diya Patel",
-    roll: "21CSE014",
-    dept: "Computer Science",
-    initials: "DP",
-    items: 8,
-    points: 28,
-    research: 1,
-    national: 3,
-    batch: "Batch 2022",
-  },
-  {
-    name: "Sneha Iyer",
-    roll: "21AIML031",
-    dept: "Computer Science",
-    initials: "SI",
-    items: 6,
-    points: 24,
-    research: 1,
-    national: 3,
-    batch: "Batch 2022",
-  },
-  {
-    name: "Meera Nair",
-    roll: "21IT017",
-    dept: "Information Technology",
-    initials: "MN",
-    items: 5,
-    points: 18,
-    research: 0,
-    national: 0,
-    batch: "Batch 2022",
-  },
-  {
-    name: "Aarav Sharma",
-    roll: "21CSE001",
-    dept: "Computer Science",
-    initials: "AS",
-    items: 6,
-    points: 15,
-    research: 2,
-    national: 3,
-    batch: "Batch 2022",
-  },
-  {
-    name: "Vivek Joshi",
-    roll: "21CSE036",
-    dept: "Computer Science",
-    initials: "VJ",
-    items: 4,
-    points: 12,
-    research: 1,
-    national: 1,
-    batch: "Batch 2022",
-  },
-  {
-    name: "Karan Singh",
-    roll: "21ECE044",
-    dept: "Electronics & Communication",
-    initials: "KS",
-    items: 3,
-    points: 9,
-    research: 0,
-    national: 1,
-    batch: "Batch 2022",
-  },
-  {
-    name: "Rahul Verma",
-    roll: "21CSE022",
-    dept: "Computer Science",
-    initials: "RV",
-    items: 2,
-    points: 6,
-    research: 0,
-    national: 0,
-    batch: "Batch 2022",
-  },
-  {
-    name: "Tanvi Desai",
-    roll: "21AIML042",
-    dept: "Computer Science",
-    initials: "TD",
-    items: 1,
-    points: 3,
-    research: 0,
-    national: 0,
-    batch: "Batch 2022",
-  },
-];
+// Initial Dataset — starts empty; data will be populated from real student achievement records
+const ACHIEVEMENT_STUDENTS: AchievementStudent[] = [];
 
-// Donut Chart Data
-const byLevelData = [
-  { name: "College", value: 18, color: "#f97316" },
-  { name: "State", value: 12, color: "#0d9488" },
-  { name: "National", value: 9, color: "#0f172a" },
-  { name: "International", value: 6, color: "#eab308" },
-];
 
-// Horizontal Bar Chart Data
-const byCategoryData = [
-  { name: "Cultural", value: 5 },
-  { name: "IEEE Publication", value: 4 },
-  { name: "Volunteering", value: 4 },
-  { name: "NCC/NSS", value: 3 },
-  { name: "Hackathon", value: 3 },
-  { name: "Seminar", value: 2 },
-  { name: "Sports", value: 2 },
-  { name: "Rank", value: 2 },
-];
+// Chart data — empty until real achievement data is recorded
+const byLevelData: { name: string; value: number; color: string }[] = [];
 
-// Participation Trend Data
-const participationTrendData = [
-  { name: "Aug", academic: 3, nonAcademic: 2 },
-  { name: "Sep", academic: 4, nonAcademic: 2 },
-  { name: "Oct", academic: 5, nonAcademic: 2 },
-  { name: "Nov", academic: 6, nonAcademic: 2 },
-  { name: "Dec", academic: 7, nonAcademic: 2 },
-  { name: "Jan", academic: 8, nonAcademic: 2 },
-  { name: "Feb", academic: 3, nonAcademic: 2 },
-  { name: "Mar", academic: 4, nonAcademic: 2 },
-  { name: "Apr", academic: 5, nonAcademic: 2 },
-  { name: "May", academic: 6, nonAcademic: 2 },
-];
+const byCategoryData: { name: string; value: number }[] = [];
+
+const participationTrendData: { name: string; academic: number; nonAcademic: number }[] = [];
+
 
 export function AchievementAnalyticsBoard() {
   const [mounted, setMounted] = useState(false);
@@ -227,10 +102,10 @@ export function AchievementAnalyticsBoard() {
       return { totalAchievements, participating: `${participating} / ${filteredStudents.length}`, national, verified: 29 };
     }
     return {
-      totalAchievements: 45,
-      participating: "9 / 10",
-      national: 21,
-      verified: 29,
+      totalAchievements: 0,
+      participating: "0 / 0",
+      national: 0,
+      verified: 0,
     };
   }, [filteredStudents, selectedBatch, selectedDept]);
 

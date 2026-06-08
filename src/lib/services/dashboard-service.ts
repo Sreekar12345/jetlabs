@@ -663,75 +663,121 @@ export async function getFacultyDashboardData(
     team.students.map((member) => member.user.performance?.score ?? 0),
   );
 
+  const allStudents = record.taughtTeams.flatMap((team) =>
+    team.students.map((member) => ({
+      name: member.user.name ?? "Unknown",
+      batch: team.batch,
+      teamName: team.name,
+      attendance: member.user.performance?.attendanceScore ?? 0,
+      score: member.user.performance?.score ?? 0,
+    })),
+  );
+
+  const uniqueBatches = [...new Set(record.taughtTeams.map((team) => team.batch))];
+  const totalStudents = allStudents.length;
+  const totalTeams = record.taughtTeams.length;
+
+  const below75Attendance = allStudents.filter((s) => s.attendance < 75).length;
+  const criticalAttendance = allStudents.filter((s) => s.attendance < 65).length;
+
+  const studentsWithBacklogs = allStudents.filter((s) => s.score < 50).length;
+  const criticalBacklogStudents = allStudents.filter((s) => s.score < 30).length;
+
+  const delayedTeams = record.taughtTeams.filter(
+    (team) => team.project.status === "AT_RISK" || team.project.status === "DELAYED",
+  ).length;
+
+  const lowPaperProgressTeams = record.taughtTeams.filter(
+    (team) => team.project.progress < 20,
+  ).length;
+
+  const highRiskStudents = allStudents.filter(
+    (s) => s.attendance < 65 || s.score < 40,
+  ).length;
+
+  const oldestPending = pendingSubmissions.length > 0
+    ? Math.max(
+        ...pendingSubmissions.map((s) =>
+          Math.floor((Date.now() - new Date(s.submittedAt).getTime()) / (1000 * 60 * 60 * 24)),
+        ),
+      )
+    : 0;
+
+  // Group teams by batch for batch-level aggregations
+  const batchMap = new Map<string, typeof record.taughtTeams>();
+  for (const team of record.taughtTeams) {
+    const list = batchMap.get(team.batch) ?? [];
+    list.push(team);
+    batchMap.set(team.batch, list);
+  }
+
   return {
     header: {
       title: "Faculty dashboard",
-      subtitle: "7 batches · 74 students · 22 active project teams",
+      subtitle: `${uniqueBatches.length} batches · ${totalStudents} students · ${totalTeams} active project teams`,
     },
     stats: [
       {
         label: "Total students",
-        value: "10",
-        detail: "across 7 batches",
+        value: `${totalStudents}`,
+        detail: `across ${uniqueBatches.length} batches`,
         tone: "neutral",
       },
       {
         label: "Below 75% attendance",
-        value: "4",
+        value: `${below75Attendance}`,
         detail: "needs follow-up",
-        tone: "warning",
+        tone: below75Attendance > 0 ? "warning" : "neutral",
       },
       {
         label: "Critical attendance",
-        value: "3",
+        value: `${criticalAttendance}`,
         detail: "< 65% + detention risk",
-        tone: "critical",
+        tone: criticalAttendance > 0 ? "critical" : "neutral",
       },
       {
         label: "Students with backlogs",
-        value: "4",
+        value: `${studentsWithBacklogs}`,
         detail: "active backlogs",
-        tone: "warning",
+        tone: studentsWithBacklogs > 0 ? "warning" : "neutral",
       },
       {
         label: "Critical backlog students",
-        value: "0",
+        value: `${criticalBacklogStudents}`,
         detail: "6+ pending · academic risk",
-        tone: "neutral",
+        tone: criticalBacklogStudents > 0 ? "critical" : "neutral",
       },
       {
         label: "Pending reviews",
-        value: "22",
-        detail: "Oldest: 3 days",
-        tone: "critical",
+        value: `${pendingSubmissions.length}`,
+        detail: oldestPending > 0 ? `Oldest: ${oldestPending} days` : "All clear",
+        tone: pendingSubmissions.length > 5 ? "critical" : pendingSubmissions.length > 0 ? "warning" : "neutral",
       },
       {
         label: "Delayed teams",
-        value: "3",
+        value: `${delayedTeams}`,
         detail: "Project status off-track",
-        tone: "critical",
+        tone: delayedTeams > 0 ? "critical" : "neutral",
       },
       {
         label: "IEEE paper delays",
-        value: "4",
+        value: `${lowPaperProgressTeams}`,
         detail: "< 20% paper progress",
-        tone: "warning",
+        tone: lowPaperProgressTeams > 0 ? "warning" : "neutral",
       },
       {
         label: "High-risk students",
-        value: "4",
+        value: `${highRiskStudents}`,
         detail: "High or Critical risk",
-        tone: "critical",
+        tone: highRiskStudents > 0 ? "critical" : "neutral",
       },
     ],
-    submissionSeries: [
-      { week: "W1", submitted: 41, reviewed: 36, escalated: 0 },
-      { week: "W2", submitted: 40, reviewed: 32, escalated: 0 },
-      { week: "W3", submitted: 38, reviewed: 30, escalated: 0 },
-      { week: "W4", submitted: 36, reviewed: 28, escalated: 0 },
-      { week: "W5", submitted: 31, reviewed: 21, escalated: 0 },
-      { week: "W6", submitted: 28, reviewed: 20, escalated: 0 },
-    ],
+    submissionSeries: analytics.map((snapshot) => ({
+      week: snapshot.label,
+      submitted: snapshot.submitted,
+      reviewed: snapshot.reviewed,
+      escalated: snapshot.escalated,
+    })),
     performanceSeries: analytics.map((snapshot) => ({
       month: snapshot.label,
       performance: snapshot.performance,
@@ -789,47 +835,101 @@ export async function getFacultyDashboardData(
         detail: "Cleared backlog items in the latest operating cycle",
       },
     ],
-    topTeams: [
-      { id: "top-1", team: "Team Atlas - DS", domain: "Stock Sentiment", progress: 90, risk: "Low", score: "90 / 100" },
-      { id: "top-2", team: "Team Vega - AIML", domain: "Skin Cancer Classifier", progress: 84, risk: "Low", score: "84 / 100" },
-      { id: "top-3", team: "Team Falcon - CSE-A", domain: "Crop Disease Detection", progress: 78, risk: "Low", score: "78 / 100" },
-      { id: "top-4", team: "Team Lyra - IT-A", domain: "AI Tutor", progress: 70, risk: "Low", score: "70 / 100" },
-    ],
+    topTeams: record.taughtTeams
+      .map((team) => ({
+        id: team.id,
+        team: `${team.name} - ${team.batch}`,
+        domain: team.project.title,
+        progress: team.project.progress,
+        risk: team.project.healthStatus === "LOW" ? "Low" : team.project.healthStatus === "MEDIUM" ? "Medium" : "High",
+        score: `${team.project.progress} / 100`,
+      }))
+      .sort((a, b) => b.progress - a.progress)
+      .slice(0, 4),
     activity: mapFacultyActivity(record),
-    studentRiskHeatmap: [
-      { name: "Aarav Sharma", batch: "CSE", rollNumber: "21CSE001", attendance: 86, risk: "Low" },
-      { name: "Diya Patel", batch: "CSE", rollNumber: "21CSE014", attendance: 92, risk: "Low" },
-      { name: "Rahul Verma", batch: "CSE", rollNumber: "21CSE022", attendance: 61, risk: "Critical" },
-      { name: "Sneha Iyer", batch: "AIML", rollNumber: "21AIML031", attendance: 88, risk: "Low" },
-      { name: "Karan Singh", batch: "ECE", rollNumber: "21ECE044", attendance: 70, risk: "High" },
-      { name: "Meera Nair", batch: "IT", rollNumber: "21IT017", attendance: 81, risk: "Low" },
-      { name: "Aditya Rao", batch: "IT", rollNumber: "21IT028", attendance: 58, risk: "Critical" },
-      { name: "Riya Kapoor", batch: "DS", rollNumber: "21DS009", attendance: 95, risk: "Low" },
-      { name: "Vivek Joshi", batch: "CSE", rollNumber: "21CSE035", attendance: 76, risk: "Low" },
-      { name: "Tanvi Desai", batch: "AIML", rollNumber: "21AIML042", attendance: 64, risk: "Critical" },
-    ],
-    batchesSnapshot: [
-      { batch: "CSE-A 2026", activeStudents: 11, totalStudents: 12, progress: 78, pendingReviews: 3 },
-      { batch: "CSE-B 2026", activeStudents: 8, totalStudents: 10, progress: 64, pendingReviews: 5 },
-      { batch: "AIML 2026", activeStudents: 14, totalStudents: 14, progress: 81, pendingReviews: 2 },
-      { batch: "ECE 2026", activeStudents: 6, totalStudents: 9, progress: 48, pendingReviews: 0 },
-      { batch: "IT-A 2026", activeStudents: 10, totalStudents: 11, progress: 70, pendingReviews: 1 },
-      { batch: "IT-B 2026", activeStudents: 7, totalStudents: 10, progress: 59, pendingReviews: 4 },
-      { batch: "DS 2026", activeStudents: 8, totalStudents: 8, progress: 88, pendingReviews: 0 },
-    ],
-    needsAttention: [
-      { team: "Team Orion", batch: "ECE", status: "Inactive", detail: "Last submission 12 days ago" },
-      { team: "Team Pulse", batch: "IT-B", status: "At risk", detail: "Last submission 8 days ago" },
-    ],
-    submissionsByBatch: [
-      { batch: "CSE-A 2026", submitted: 11, pending: 3 },
-      { batch: "CSE-B 2026", submitted: 8, pending: 5 },
-      { batch: "AIML 2026", submitted: 14, pending: 2 },
-      { batch: "ECE 2026", submitted: 6, pending: 7 },
-      { batch: "IT-A 2026", submitted: 10, pending: 1 },
-      { batch: "IT-B 2026", submitted: 7, pending: 4 },
-      { batch: "DS 2026", submitted: 8, pending: 0 },
-    ],
+    studentRiskHeatmap: allStudents.map((student, index) => ({
+      name: student.name,
+      batch: student.batch,
+      rollNumber: `N/A`,
+      attendance: student.attendance,
+      risk:
+        student.attendance < 65
+          ? "Critical"
+          : student.attendance < 75
+            ? "High"
+            : "Low",
+    })),
+    batchesSnapshot: [...batchMap.entries()].map(([batch, teams]) => {
+      const batchStudents = teams.flatMap((t) => t.students);
+      const activeStudents = batchStudents.filter(
+        (s) => (s.user.performance?.score ?? 0) > 0,
+      ).length;
+      const batchProgress =
+        teams.length > 0
+          ? Math.round(teams.reduce((sum, t) => sum + t.project.progress, 0) / teams.length)
+          : 0;
+      const batchPending = teams.reduce(
+        (sum, t) =>
+          sum +
+          t.submissions.filter(
+            (s) =>
+              s.status === "PENDING_REVIEW" ||
+              s.status === "UNDER_REVIEW" ||
+              s.status === "REVISION_REQUIRED",
+          ).length,
+        0,
+      );
+      return {
+        batch,
+        activeStudents,
+        totalStudents: batchStudents.length,
+        progress: batchProgress,
+        pendingReviews: batchPending,
+      };
+    }),
+    needsAttention: record.taughtTeams
+      .filter(
+        (team) =>
+          team.project.healthStatus === "HIGH" ||
+          team.project.healthStatus === "MEDIUM" ||
+          (team.submissions.length > 0 &&
+            Date.now() - new Date(team.submissions[0].submittedAt).getTime() >
+              7 * 24 * 60 * 60 * 1000),
+      )
+      .map((team) => {
+        const lastSub = team.submissions[0];
+        const daysSince = lastSub
+          ? Math.floor((Date.now() - new Date(lastSub.submittedAt).getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+        return {
+          team: team.name,
+          batch: team.batch,
+          status:
+            team.project.healthStatus === "HIGH"
+              ? "At risk"
+              : daysSince > 7
+                ? "Inactive"
+                : "At risk",
+          detail: lastSub
+            ? `Last submission ${daysSince} days ago`
+            : "No submissions yet",
+        };
+      }),
+    submissionsByBatch: [...batchMap.entries()].map(([batch, teams]) => {
+      const submitted = teams.reduce((sum, t) => sum + t.submissions.length, 0);
+      const pending = teams.reduce(
+        (sum, t) =>
+          sum +
+          t.submissions.filter(
+            (s) =>
+              s.status === "PENDING_REVIEW" ||
+              s.status === "UNDER_REVIEW" ||
+              s.status === "REVISION_REQUIRED",
+          ).length,
+        0,
+      );
+      return { batch, submitted, pending };
+    }),
   };
 }
 

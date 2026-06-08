@@ -79,280 +79,8 @@ type TeamSignal = {
 
 type FacultyTeamExecutionViewProps = {
   module: ModulePageData;
+  initialTeams?: TeamSignal[];
 };
-
-const teams: TeamSignal[] = [
-  {
-    id: "team-falcon",
-    name: "Team Falcon",
-    department: "CSE-A",
-    members: 4,
-    mentor: "Dr. Mehta",
-    sprint: "Week 4",
-    state: "Healthy execution",
-    confidence: 85,
-    priority: "P3",
-    project: "Crop Disease Detection",
-    milestone: "Model validation complete",
-    submissions: 80,
-    velocity: 82,
-    ieee: 65,
-    viva: 75,
-    deployment: 70,
-    collaboration: 85,
-    pendingReviews: 0,
-    lastMentor: "2 days ago",
-    streak: "14-day delivery streak",
-    bottleneck: "None",
-    prediction: "Likely final-evaluation leader.",
-    recommendation: "Shortlist for showcase.",
-    signals: ["Strong consistency", "Regular logs"],
-    contribution: [
-      { member: "Riya", value: 30, status: "Balanced" },
-      { member: "Kabir", value: 25, status: "Balanced" },
-      { member: "Neel", value: 25, status: "Balanced" },
-      { member: "Anu", value: 20, status: "Balanced" },
-    ],
-    heatmap: [8, 9, 8, 9, 9, 8, 9, 8, 9, 10, 9, 10],
-    timeline: [
-      { label: "Baseline submitted", type: "submission", week: "W1" },
-      { label: "Mentor revision approved", type: "review", week: "W2" },
-      { label: "IEEE draft approved", type: "ieee", week: "W3" },
-      { label: "Viva simulation passed", type: "viva", week: "W4" },
-    ],
-  },
-  {
-    id: "team-nova",
-    name: "Team Nova",
-    department: "CSE-A",
-    members: 4,
-    mentor: "Prof. Arjun",
-    sprint: "Week 3",
-    state: "Slowing down",
-    confidence: 58,
-    priority: "P1",
-    project: "Fraud Detection Engine",
-    milestone: "Data parsing overdue",
-    submissions: 40,
-    velocity: 45,
-    ieee: 15,
-    viva: 35,
-    deployment: 20,
-    collaboration: 48,
-    pendingReviews: 2,
-    lastMentor: "5 days ago",
-    streak: "0 submissions in 5 days",
-    bottleneck: "IEEE progress unchanged and low team activity",
-    prediction: "High probability of delayed final submission.",
-    recommendation: "Mentor intervention within 3 days.",
-    signals: ["No submissions in 5 days", "IEEE unchanged"],
-    contribution: [
-      { member: "Riya", value: 42, status: "Overloaded" },
-      { member: "Kabir", value: 24, status: "Quiet" },
-      { member: "Neel", value: 21, status: "Silent" },
-      { member: "Anu", value: 13, status: "Inactive" },
-    ],
-    heatmap: [7, 6, 5, 4, 3, 2, 2, 1, 1, 0, 1, 0],
-    timeline: [
-      { label: "Baseline submitted", type: "submission", week: "W1" },
-      { label: "Mentor revision", type: "review", week: "W2" },
-      { label: "IEEE stalled", type: "risk", week: "W3" },
-    ],
-  },
-  {
-    id: "team-vega",
-    name: "Team Vega",
-    department: "AIML",
-    members: 5,
-    mentor: "Dr. Nisha",
-    sprint: "Week 4",
-    state: "Healthy execution",
-    confidence: 76,
-    priority: "P2",
-    project: "Skin Cancer Classifier",
-    milestone: "Clinical dataset integration",
-    submissions: 70,
-    velocity: 74,
-    ieee: 20,
-    viva: 68,
-    deployment: 58,
-    collaboration: 82,
-    pendingReviews: 1,
-    lastMentor: "1 day ago",
-    streak: "9-day delivery streak",
-    bottleneck: "None",
-    prediction: "Steady weekly submissions.",
-    recommendation: "Monitor IEEE draft velocity.",
-    signals: ["Consistent output"],
-    contribution: [
-      { member: "Nisha", value: 30, status: "Active" },
-      { member: "Karan", value: 27, status: "Active" },
-      { member: "Ira", value: 23, status: "Active" },
-      { member: "Manav", value: 20, status: "Quiet" },
-    ],
-    heatmap: [6, 7, 7, 8, 7, 6, 8, 7, 7, 6, 6, 5],
-    timeline: [
-      { label: "Dataset approved", type: "review", week: "W1" },
-      { label: "IEEE methods updated", type: "ieee", week: "W3" },
-      { label: "In review", type: "review", week: "W4" },
-    ],
-  },
-  {
-    id: "team-orion",
-    name: "Team Orion",
-    department: "ECE",
-    members: 3,
-    mentor: "Prof. Raman",
-    sprint: "Week 2",
-    state: "Blocked",
-    confidence: 44,
-    priority: "P0",
-    project: "IoT Air Quality",
-    milestone: "Hardware sensors calibrated",
-    submissions: 20,
-    velocity: 28,
-    ieee: 80,
-    viva: 12,
-    deployment: 10,
-    collaboration: 36,
-    pendingReviews: 3,
-    lastMentor: "12 days ago",
-    streak: "Inactive profile",
-    bottleneck: "No recent hardware testing logs",
-    prediction: "High failure probability if demo evidence is not restored.",
-    recommendation: "Immediate intervention required.",
-    signals: ["Pending reviews", "Hardware proof missing"],
-    contribution: [
-      { member: "Imran", value: 52, status: "Overloaded" },
-      { member: "Sana", value: 31, status: "Active" },
-      { member: "Dev", value: 17, status: "Silent" },
-    ],
-    heatmap: [6, 5, 4, 4, 2, 2, 1, 1, 0, 0, 1, 0],
-    timeline: [
-      { label: "Prototype submitted", type: "submission", week: "W1" },
-      { label: "Hardware proof missing", type: "risk", week: "W2" },
-    ],
-  },
-  {
-    id: "team-lyra",
-    name: "Team Lyra",
-    department: "IT-A",
-    members: 4,
-    mentor: "Dr. Iyer",
-    sprint: "Week 4",
-    state: "Healthy execution",
-    confidence: 80,
-    priority: "P2",
-    project: "AI Tutor",
-    milestone: "System testing",
-    submissions: 60,
-    velocity: 65,
-    ieee: 35,
-    viva: 70,
-    deployment: 68,
-    collaboration: 78,
-    pendingReviews: 0,
-    lastMentor: "3 days ago",
-    streak: "5-day delivery streak",
-    bottleneck: "None",
-    prediction: "Likely timely completion candidate.",
-    recommendation: "Check model verification.",
-    signals: ["Steady recovery"],
-    contribution: [
-      { member: "Nisha", value: 30, status: "Active" },
-      { member: "Ayaan", value: 27, status: "Active" },
-      { member: "Tara", value: 23, status: "Active" },
-      { member: "Om", value: 20, status: "Quiet" },
-    ],
-    heatmap: [5, 6, 6, 7, 7, 8, 8, 8, 9, 8, 9, 9],
-    timeline: [
-      { label: "Baseline submitted", type: "submission", week: "W1" },
-      { label: "Milestone cleared", type: "review", week: "W3" },
-    ],
-  },
-  {
-    id: "team-atlas",
-    name: "Team Atlas",
-    department: "DS",
-    members: 4,
-    mentor: "Prof. Arjun",
-    sprint: "Week 4",
-    state: "Healthy execution",
-    confidence: 92,
-    priority: "P3",
-    project: "Stock Sentiment",
-    milestone: "Final validation",
-    submissions: 90,
-    velocity: 92,
-    ieee: 80,
-    viva: 94,
-    deployment: 95,
-    collaboration: 90,
-    pendingReviews: 0,
-    lastMentor: "today",
-    streak: "18-day delivery streak",
-    bottleneck: "None",
-    prediction: "Exceptional showcase quality.",
-    recommendation: "Nominate for departmental honors.",
-    signals: ["Exceptional consistency", "Strong research"],
-    contribution: [
-      { member: "Priya", value: 28, status: "Balanced" },
-      { member: "Aarav", value: 26, status: "Balanced" },
-      { member: "Meera", value: 24, status: "Balanced" },
-      { member: "Rohan", value: 22, status: "Balanced" },
-    ],
-    heatmap: [9, 10, 10, 10, 9, 10, 10, 10, 10, 9, 10, 10],
-    timeline: [
-      { label: "Architecture approved", type: "review", week: "W1" },
-      { label: "IEEE draft approved", type: "ieee", week: "W2" },
-      { label: "Deployment live", type: "submission", week: "W3" },
-      { label: "Viva simulation passed", type: "viva", week: "W4" },
-    ],
-  },
-  {
-    id: "team-pulse",
-    name: "Team Pulse",
-    department: "IT-B",
-    members: 3,
-    mentor: "Dr. Nisha",
-    sprint: "Week 3",
-    state: "High risk",
-    confidence: 54,
-    priority: "P1",
-    project: "Phishing Classifier",
-    milestone: "Feature extraction blocked",
-    submissions: 30,
-    velocity: 35,
-    ieee: 25,
-    viva: 42,
-    deployment: 18,
-    collaboration: 52,
-    pendingReviews: 1,
-    lastMentor: "8 days ago",
-    streak: "Warning state active",
-    bottleneck: "IEEE writing lags",
-    prediction: "Potential delay in research submission.",
-    recommendation: "Schedule mentor check-in.",
-    signals: ["Research lag", "Inactivity drop"],
-    contribution: [
-      { member: "Imran", value: 52, status: "Overloaded" },
-      { member: "Sana", value: 31, status: "Active" },
-      { member: "Dev", value: 17, status: "Silent" },
-    ],
-    heatmap: [4, 3, 3, 2, 2, 1, 2, 1, 0, 1, 1, 0],
-    timeline: [
-      { label: "Dataset parsing approved", type: "review", week: "W1" },
-      { label: "Consistency drop warning", type: "risk", week: "W3" },
-    ],
-  },
-];
-
-const healthOverview = [
-  { label: "Active teams", value: "7", trend: "7 monitored", tone: "insight" as const, icon: Users2 },
-  { label: "Healthy execution", value: "4", trend: "On track", tone: "healthy" as const, icon: CheckCircle2 },
-  { label: "Slowing teams", value: "1", trend: "Delayed", tone: "attention" as const, icon: TrendingDown },
-  { label: "At-risk teams", value: "2", trend: "Critical / High", tone: "critical" as const, icon: ShieldAlert },
-];
 
 const pipelineColumns = [
   { state: "Healthy execution" as TeamState, detail: "Strong delivery momentum" },
@@ -360,49 +88,6 @@ const pipelineColumns = [
   { state: "Slowing down" as TeamState, detail: "Reduced progress consistency" },
   { state: "Blocked" as TeamState, detail: "Submission or review dependency" },
   { state: "High risk" as TeamState, detail: "Delay probability increasing" },
-];
-
-const milestoneTracker = [
-  { name: "Problem Finalization", confidence: 91, risk: "Low", owner: "Team Atlas", status: "Approved" },
-  { name: "Dataset Baseline", confidence: 76, risk: "Medium", owner: "Team Lyra", status: "In review" },
-  { name: "Improved Model", confidence: 62, risk: "High", owner: "Team Nova", status: "Needs checkpoint" },
-  { name: "Frontend Prototype", confidence: 83, risk: "Low", owner: "Team Pulse", status: "Stable" },
-  { name: "Integration", confidence: 57, risk: "Critical", owner: "Team Vega", status: "Blocked" },
-];
-
-const riskQuadrants = [
-  { label: "High progress / low risk", teams: "Falcon, Atlas, Lyra, Vega", tone: "healthy" },
-  { label: "High progress / high risk", teams: "Nova", tone: "attention" },
-  { label: "Low progress / high risk", teams: "Pulse", tone: "critical" },
-  { label: "Low progress / recovering", teams: "Orion", tone: "insight" },
-];
-
-const leaderboard = [
-  { rank: 1, team: "Team Atlas", score: 92, note: "Best delivery consistency" },
-  { rank: 2, team: "Team Falcon", score: 85, note: "Strong review responsiveness" },
-  { rank: 3, team: "Team Lyra", score: 80, note: "On track execution" },
-  { rank: 4, team: "Team Pulse", score: 54, note: "Needs mentor escalation" },
-];
-
-const executionBlockers = [
-  {
-    title: "Pending reviews",
-    detail: "3 packets waiting for faculty decision",
-    icon: ClipboardCheck,
-    tone: "attention" as const,
-  },
-  {
-    title: "Student inactivity",
-    detail: "Team Orion silent for 12 days",
-    icon: TimerReset,
-    tone: "critical" as const,
-  },
-  {
-    title: "Review loops",
-    detail: "Team Pulse stuck in evidence correction",
-    icon: GitBranch,
-    tone: "blocked" as const,
-  },
 ];
 
 function toneForState(state: TeamState): Tone {
@@ -565,14 +250,15 @@ function TimelineEvent({ team }: { team: TeamSignal }) {
   );
 }
 
-export function FacultyTeamExecutionView({ module }: FacultyTeamExecutionViewProps) {
+export function FacultyTeamExecutionView({ module, initialTeams }: FacultyTeamExecutionViewProps) {
+  const teamsList = initialTeams ?? [];
   const [activeTab, setActiveTab] = useState("Table");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTeamId, setSelectedTeamId] = useState<string>("team-falcon");
+  const [selectedTeamId, setSelectedTeamId] = useState<string>(teamsList[0]?.id ?? "");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredTeams = useMemo(() => {
-    return teams.filter((team) => {
+    return teamsList.filter((team) => {
       const q = searchQuery.toLowerCase();
       return (
         team.name.toLowerCase().includes(q) ||
@@ -580,11 +266,73 @@ export function FacultyTeamExecutionView({ module }: FacultyTeamExecutionViewPro
         team.project.toLowerCase().includes(q)
       );
     });
-  }, [searchQuery]);
+  }, [searchQuery, teamsList]);
 
   const activeTeam = useMemo(() => {
-    return teams.find((t) => t.id === selectedTeamId) || null;
-  }, [selectedTeamId]);
+    return teamsList.find((t) => t.id === selectedTeamId) || null;
+  }, [selectedTeamId, teamsList]);
+
+  const healthOverview = useMemo(() => {
+    const healthy = teamsList.filter((t) => t.state === "Healthy execution").length;
+    const slowing = teamsList.filter((t) => t.state === "Slowing down" || t.state === "Needs review").length;
+    const atRisk = teamsList.filter((t) => t.state === "High risk" || t.state === "Critical" || t.state === "Blocked").length;
+    return [
+      { label: "Active teams", value: String(teamsList.length), trend: `${teamsList.length} monitored`, tone: "insight" as const, icon: Users2 },
+      { label: "Healthy execution", value: String(healthy), trend: "On track", tone: "healthy" as const, icon: CheckCircle2 },
+      { label: "Slowing teams", value: String(slowing), trend: "Delayed", tone: "attention" as const, icon: TrendingDown },
+      { label: "At-risk teams", value: String(atRisk), trend: "Critical / High", tone: "critical" as const, icon: ShieldAlert },
+    ];
+  }, [teamsList]);
+
+  const milestoneTracker = useMemo(() => {
+    return teamsList.map((t) => {
+      const risk = t.confidence >= 80 ? "Low" : t.confidence >= 60 ? "Medium" : t.confidence >= 50 ? "High" : "Critical";
+      const status = t.state === "Healthy execution" ? "Approved" : t.state === "Blocked" ? "Blocked" : t.state === "Slowing down" ? "Needs checkpoint" : "In review";
+      return { name: t.milestone, confidence: t.confidence, risk, owner: t.name, status };
+    });
+  }, [teamsList]);
+
+  const riskQuadrants = useMemo(() => {
+    const highProgressLowRisk = teamsList.filter((t) => t.confidence >= 70 && (t.state === "Healthy execution")).map((t) => t.name.replace("Team ", "")).join(", ") || "None";
+    const highProgressHighRisk = teamsList.filter((t) => t.confidence >= 50 && t.confidence < 70 && (t.state === "Slowing down" || t.state === "Needs review")).map((t) => t.name.replace("Team ", "")).join(", ") || "None";
+    const lowProgressHighRisk = teamsList.filter((t) => t.confidence < 50 || t.state === "High risk" || t.state === "Critical").map((t) => t.name.replace("Team ", "")).join(", ") || "None";
+    const lowProgressRecovering = teamsList.filter((t) => t.state === "Blocked").map((t) => t.name.replace("Team ", "")).join(", ") || "None";
+    return [
+      { label: "High progress / low risk", teams: highProgressLowRisk, tone: "healthy" },
+      { label: "High progress / high risk", teams: highProgressHighRisk, tone: "attention" },
+      { label: "Low progress / high risk", teams: lowProgressHighRisk, tone: "critical" },
+      { label: "Low progress / recovering", teams: lowProgressRecovering, tone: "insight" },
+    ];
+  }, [teamsList]);
+
+  const leaderboard = useMemo(() => {
+    return [...teamsList]
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, 4)
+      .map((t, i) => ({
+        rank: i + 1,
+        team: t.name,
+        score: t.confidence,
+        note: t.confidence >= 80 ? "Strong delivery consistency" : t.confidence >= 60 ? "On track execution" : "Needs mentor escalation",
+      }));
+  }, [teamsList]);
+
+  const executionBlockers = useMemo(() => {
+    const blockers: Array<{ title: string; detail: string; icon: LucideIcon; tone: "attention" | "critical" | "blocked" }> = [];
+    const totalPending = teamsList.reduce((sum, t) => sum + t.pendingReviews, 0);
+    if (totalPending > 0) {
+      blockers.push({ title: "Pending reviews", detail: `${totalPending} packets waiting for faculty decision`, icon: ClipboardCheck, tone: "attention" });
+    }
+    const inactiveTeams = teamsList.filter((t) => t.state === "Blocked");
+    for (const t of inactiveTeams) {
+      blockers.push({ title: "Student inactivity", detail: `${t.name} is blocked`, icon: TimerReset, tone: "critical" });
+    }
+    const riskTeams = teamsList.filter((t) => t.state === "High risk" || t.state === "Critical");
+    for (const t of riskTeams) {
+      blockers.push({ title: "Review loops", detail: `${t.name}: ${t.bottleneck}`, icon: GitBranch, tone: "blocked" });
+    }
+    return blockers;
+  }, [teamsList]);
 
   const activeTeamTone = activeTeam ? toneForState(activeTeam.state) : "healthy";
   const activeTeamStyles = toneStyles(activeTeamTone);
