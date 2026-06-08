@@ -41,6 +41,19 @@ export async function createTeamAction(input: unknown) {
   console.log("Team Name:", teamName);
   console.log("Student Names:", studentNames);
 
+  // Verify that the faculty user exists in the database to prevent fkey violations (e.g., from stale cookies after reset)
+  const facultyUser = await db.user.findUnique({
+    where: { id: facultyId },
+  });
+
+  if (!facultyUser) {
+    return {
+      success: false,
+      error: "Your faculty account was not found in the database. Please log out and sign back in.",
+      message: "Your faculty account was not found in the database. Please log out and sign back in.",
+    };
+  }
+
   try {
     const passwordHash = await hash("Syntra123", 12);
     const result = await db.$transaction(async (tx) => {
