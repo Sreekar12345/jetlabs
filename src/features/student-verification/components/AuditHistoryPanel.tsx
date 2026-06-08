@@ -49,7 +49,7 @@ export function AuditHistoryPanel({ studentId, refreshTrigger }: AuditHistoryPan
           throw new Error(data.error?.message || "Failed to load audit logs.");
         }
 
-        setLogs(data.logs || []);
+        setLogs(data.data?.logs ?? data.logs ?? []);
       } catch (err: any) {
         console.error(err);
         setError(err.message || "Failed to load audit logs.");

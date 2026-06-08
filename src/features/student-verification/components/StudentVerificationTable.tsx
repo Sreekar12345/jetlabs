@@ -72,7 +72,7 @@ export function StudentVerificationTable() {
           throw new Error(data.error?.message || "Failed to fetch students.");
         }
 
-        setStudents(data.students || []);
+        setStudents(data.data?.students ?? data.students ?? []);
       } catch (err: any) {
         console.error(err);
         toast.error(err.message || "Failed to load verification list.");
