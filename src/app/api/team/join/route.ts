@@ -95,16 +95,36 @@ export async function POST(request: NextRequest) {
 
     // 5. Successful join - perform transaction
     await db.$transaction(async (tx) => {
-      // 5a. Create student-team membership relationship
-      await tx.teamMember.create({
-        data: {
-          teamId: team.id,
-          userId,
-          roleLabel: "Member",
-          contributionScore: 0,
-          lastActiveAt: new Date(),
+      // 5a. Create or update student-team membership relationship
+      const existingMember = await tx.teamMember.findUnique({
+        where: {
+          teamId_userId: {
+            teamId: team.id,
+            userId,
+          },
         },
       });
+
+      if (!existingMember) {
+        await tx.teamMember.create({
+          data: {
+            teamId: team.id,
+            userId,
+            roleLabel: "Member",
+            contributionScore: 0,
+            lastActiveAt: new Date(),
+          },
+        });
+      } else {
+        await tx.teamMember.update({
+          where: {
+            id: existingMember.id,
+          },
+          data: {
+            lastActiveAt: new Date(),
+          },
+        });
+      }
 
       // 5b. Update student record in User table
       await tx.user.update({
