@@ -26,10 +26,15 @@ export class VerificationService {
     status?: string;
     department?: string;
     searchQuery?: string;
+    facultyId?: string;
   }) {
     const where: any = {
       role: "STUDENT",
     };
+
+    if (filters.facultyId) {
+      where.facultyId = filters.facultyId;
+    }
 
     if (filters.status && filters.status !== "ALL") {
       where.verificationStatus = filters.status as VerificationStatus;

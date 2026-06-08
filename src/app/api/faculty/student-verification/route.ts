@@ -8,7 +8,8 @@ export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   try {
     // Restrict access to faculty members only
-    await requireRole("FACULTY");
+    const session = await requireRole("FACULTY");
+    const facultyId = session.user.id;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "ALL";
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
       status,
       department,
       searchQuery,
+      facultyId,
     });
 
     return apiSuccess({ students });
