@@ -14,6 +14,8 @@ import {
   AlertTriangle,
   Users,
   Plus,
+  Check,
+  Copy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,6 +119,7 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
   const [formData, setFormData] = useState({
     name: "",
   });
+  const [createdTeamCode, setCreatedTeamCode] = useState<string | null>(null);
 
   const [studentNames, setStudentNames] = useState<string[]>(["", "", "", "", "", ""]);
   const [showStudents, setShowStudents] = useState(false);
@@ -136,22 +139,8 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         studentNames: studentNames.filter((name) => name.trim().length > 0),
       });
       if (response.success) {
-        toast.success(
-          <div>
-            <p className="font-bold text-slate-900">Team Created Successfully</p>
-            <p className="mt-1 text-sm text-slate-700">
-              Team Code: <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono font-bold text-indigo-600">{response.teamCode}</code>
-            </p>
-            <p className="mt-1 text-xs text-slate-500">Share this code with students to join the team.</p>
-          </div>,
-          { duration: 8000 }
-        );
-        setIsCreateModalOpen(false);
-        setStudentNames(["", "", "", "", "", ""]);
-        setShowStudents(false);
-        setFormData({
-          name: "",
-        });
+        setCreatedTeamCode(response.teamCode || null);
+        toast.success("Team created successfully!");
       } else {
         toast.error(response.error);
       }
@@ -504,102 +493,154 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         </CardContent>
       </Card>
 
-      <Modal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+      <Modal open={isCreateModalOpen} onOpenChange={(open) => {
+        setIsCreateModalOpen(open);
+        if (!open) {
+          setCreatedTeamCode(null);
+        }
+      }}>
         <ModalContent className="max-w-xl">
-          <form onSubmit={handleSubmit}>
-            <ModalHeader>
-              <div>
-                <ModalTitle>Create a team</ModalTitle>
-                <ModalDescription>
-                  Initialize a new student project team and assign milestones.
+          {createdTeamCode ? (
+            <div className="flex flex-col items-center justify-center text-center py-6 px-4 space-y-5">
+              <div className="size-16 rounded-full bg-emerald-50 border border-emerald-150 flex items-center justify-center text-emerald-600">
+                <Check className="size-8 stroke-[3]" />
+              </div>
+              <div className="space-y-1.5">
+                <ModalTitle className="text-xl font-bold text-slate-900">Team Created Successfully</ModalTitle>
+                <ModalDescription className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Share this unique code with students so they can join the team workspace.
                 </ModalDescription>
               </div>
-              <ModalCloseButton onClick={() => setIsCreateModalOpen(false)} />
-            </ModalHeader>
-            <ModalBody className="space-y-4">
-              <div className="space-y-1.5">
-                <label htmlFor="team-name" className="text-xs font-semibold text-slate-600">
-                  Team Name
-                </label>
-                <Input
-                  id="team-name"
-                  name="name"
-                  placeholder="e.g. Team Quantum"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700 tracking-wide block uppercase">
-                  Assign Team Members
-                </label>
-                <div className="flex flex-wrap items-center gap-3">
+              <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-slate-50/50 p-5 space-y-3">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block text-left">
+                  Team Code
+                </span>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-white border border-slate-200 px-3 py-2.5 rounded-lg font-mono text-lg font-bold text-indigo-600 select-all tracking-wider text-center">
+                    {createdTeamCode}
+                  </code>
                   <Button
-                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdTeamCode);
+                      toast.success("Team code copied to clipboard!");
+                    }}
                     variant="outline"
-                    onClick={() => setShowStudents(!showStudents)}
-                    className={cn(
-                      "rounded-xl border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 flex items-center gap-2 px-4 py-2 transition-all duration-200",
-                      showStudents && "border-slate-800 bg-slate-50"
-                    )}
+                    className="h-11 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shrink-0 font-semibold px-4 rounded-lg flex items-center gap-2"
                   >
-                    <Users className="size-4 text-slate-500" />
-                    <span className="font-medium text-sm">Student Names</span>
-                    <span className="inline-flex items-center justify-center bg-slate-100 text-slate-800 text-xs font-bold px-2 py-0.5 rounded-full min-w-5 h-5">
-                      {studentNames.filter((name) => name.trim().length > 0).length}
-                    </span>
+                    <Copy className="size-4 text-slate-500" />
+                    Copy
                   </Button>
                 </div>
-
-                {showStudents && (
-                  <div className="mt-2 p-4 rounded-2xl border border-slate-100 bg-slate-50/50 shadow-inner space-y-3">
-                    <p className="text-[11px] font-medium text-slate-500">
-                      Enter up to 6 student names to assign to this team.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {studentNames.map((name, index) => (
-                        <div key={index} className="space-y-1">
-                          <label htmlFor={`student-name-${index}`} className="text-[10px] font-semibold text-slate-500 block">
-                            Student {index + 1}
-                          </label>
-                          <Input
-                            id={`student-name-${index}`}
-                            placeholder="e.g. Aarav Sharma"
-                            value={name}
-                            onChange={(e) => {
-                              const newNames = [...studentNames];
-                              newNames[index] = e.target.value;
-                              setStudentNames(newNames);
-                            }}
-                            className="bg-white text-xs h-9 rounded-xl border-slate-200"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
-            </ModalBody>
-            <ModalFooter>
               <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsCreateModalOpen(false)}
-                className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setCreatedTeamCode(null);
+                  setStudentNames(["", "", "", "", "", ""]);
+                  setShowStudents(false);
+                  setFormData({ name: "" });
+                }}
+                className="w-full max-w-sm bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-3 font-semibold text-sm transition-colors"
               >
-                Cancel
+                Done
               </Button>
-              <Button
-                type="submit"
-                disabled={isPending}
-                className="rounded-xl bg-slate-900 text-white hover:bg-slate-800 min-w-[100px]"
-              >
-                {isPending ? "Creating..." : "Create Team"}
-              </Button>
-            </ModalFooter>
-          </form>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <ModalHeader>
+                <div>
+                  <ModalTitle>Create a team</ModalTitle>
+                  <ModalDescription>
+                    Initialize a new student project team and assign milestones.
+                  </ModalDescription>
+                </div>
+                <ModalCloseButton onClick={() => setIsCreateModalOpen(false)} />
+              </ModalHeader>
+              <ModalBody className="space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="team-name" className="text-xs font-semibold text-slate-600">
+                    Team Name
+                  </label>
+                  <Input
+                    id="team-name"
+                    name="name"
+                    placeholder="e.g. Team Quantum"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-700 tracking-wide block uppercase">
+                    Assign Team Members
+                  </label>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowStudents(!showStudents)}
+                      className={cn(
+                        "rounded-xl border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 flex items-center gap-2 px-4 py-2 transition-all duration-200",
+                        showStudents && "border-slate-800 bg-slate-50"
+                      )}
+                    >
+                      <Users className="size-4 text-slate-500" />
+                      <span className="font-medium text-sm">Student Names</span>
+                      <span className="inline-flex items-center justify-center bg-slate-100 text-slate-800 text-xs font-bold px-2 py-0.5 rounded-full min-w-5 h-5">
+                        {studentNames.filter((name) => name.trim().length > 0).length}
+                      </span>
+                    </Button>
+                  </div>
+
+                  {showStudents && (
+                    <div className="mt-2 p-4 rounded-2xl border border-slate-100 bg-slate-50/50 shadow-inner space-y-3">
+                      <p className="text-[11px] font-medium text-slate-500">
+                        Enter up to 6 student names to assign to this team.
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {studentNames.map((name, index) => (
+                          <div key={index} className="space-y-1">
+                            <label htmlFor={`student-name-${index}`} className="text-[10px] font-semibold text-slate-500 block">
+                              Student {index + 1}
+                            </label>
+                            <Input
+                              id={`student-name-${index}`}
+                              placeholder="e.g. Aarav Sharma"
+                              value={name}
+                              onChange={(e) => {
+                                const newNames = [...studentNames];
+                                newNames[index] = e.target.value;
+                                setStudentNames(newNames);
+                              }}
+                              className="bg-white text-xs h-9 rounded-xl border-slate-200"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isPending}
+                  className="rounded-xl bg-slate-900 text-white hover:bg-slate-800 min-w-[100px]"
+                >
+                  {isPending ? "Creating..." : "Create Team"}
+                </Button>
+              </ModalFooter>
+            </form>
+          )}
         </ModalContent>
       </Modal>
     </div>
