@@ -440,7 +440,7 @@ export function OnboardingTeamClient({ userName, pendingRequest: initialPendingR
                               id="collegeName"
                               type="text"
                               className="h-11 pl-9 border-border/80 bg-slate-50/50 focus-visible:bg-white"
-                              placeholder="e.g. Syntra Institute"
+                              placeholder="e.g. JetLabs Institute"
                               value={requestData.collegeName}
                               onChange={(e) => {
                                 setError(null);

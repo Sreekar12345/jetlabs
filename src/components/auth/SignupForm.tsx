@@ -437,7 +437,7 @@ export function SignupForm({ activeRole, callbackUrl }: SignupFormProps) {
                     name={field.name}
                     type="text"
                     label="Institution Name *"
-                    placeholder="e.g., Syntra University"
+                    placeholder="e.g., JetLabs University"
                     value={field.value}
                     onChange={(e) => {
                       clearErrorState();

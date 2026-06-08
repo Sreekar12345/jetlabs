@@ -714,12 +714,6 @@ export function LandingClient({ isLoggedIn, dashboardPath }: LandingClientProps)
             <span className="font-display font-semibold text-[18px] tracking-tight text-[#000000]">
               JetLabs
             </span>
-            {!scrolled && (
-              <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-mono tracking-[0.5px] uppercase border border-black/10 px-2 py-0.5 rounded-[4px] ml-2 select-none bg-[#f7f7f5]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#1ea64a] animate-pulse" />
-                <span>AOIP ACTIVE</span>
-              </div>
-            )}
           </div>
 
           <nav className="flex items-center gap-3">
@@ -731,14 +725,6 @@ export function LandingClient({ isLoggedIn, dashboardPath }: LandingClientProps)
             </Link>
             
             <div className="flex items-center gap-2">
-              {!scrolled && (
-                <Link
-                  href="/auth/login"
-                  className="hidden md:inline-block rounded-[50px] bg-[#ffffff] text-[#000000] text-[14px] font-medium pt-1.5 pb-2 px-4 border border-black hover:scale-[0.98] transition-transform active:scale-[0.95]"
-                >
-                  Explore Problems
-                </Link>
-              )}
               <Link
                 href="/auth/login"
                 className={cn(

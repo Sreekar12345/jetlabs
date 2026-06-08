@@ -303,7 +303,7 @@ export function OnboardingClient({ userName }: OnboardingClientProps) {
                         id="collegeName"
                         type="text"
                         className={inputClasses}
-                        placeholder="e.g. Syntra Institute"
+                        placeholder="e.g. JetLabs Institute"
                         value={requestData.collegeName}
                         onChange={(e) => {
                           setError(null);

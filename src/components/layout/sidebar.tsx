@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LogOut, Orbit } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -110,15 +110,14 @@ function SidebarPanel({ user, collapsed, onNavigate }: SidebarPanelProps) {
           collapsed && "justify-center px-0",
         )}
       >
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-black text-white">
-          <Orbit className="size-4" />
-        </div>
         {!collapsed ? (
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-black">Syntra</p>
+            <p className="truncate text-sm font-semibold text-black">jetlabs</p>
             <p className="truncate text-xs text-black/60">Academic OS</p>
           </div>
-        ) : null}
+        ) : (
+          <p className="text-sm font-semibold text-black">jl</p>
+        )}
       </div>
 
       <div className="scrollbar-subtle flex-1 overflow-y-auto px-3 py-5">

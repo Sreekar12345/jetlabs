@@ -387,7 +387,7 @@ export function PerformanceClient({
         <Card className="border-slate-900 bg-slate-950 text-white">
           <CardHeader className="border-b border-white/10 pb-5">
             <CardTitle className="text-xl">Platform Tier Status</CardTitle>
-            <p className="text-xs text-white/50">Performance levels are derived dynamically based on your Syntra index score.</p>
+            <p className="text-xs text-white/50">Performance levels are derived dynamically based on your jetlabs index score.</p>
           </CardHeader>
           <CardContent className="space-y-3 p-5 text-xs">
             {tiers.map((tier) => (

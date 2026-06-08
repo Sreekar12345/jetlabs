@@ -356,7 +356,7 @@ export async function getStudentDashboardData(
   if (!record || record.role !== "STUDENT") {
     return {
       welcome: {
-        title: "Welcome to Syntra",
+        title: "Welcome to jetlabs",
         subtitle: "Your academic operating system is ready once a team is assigned.",
         project: "Project pending",
         cohort: "Team not assigned",

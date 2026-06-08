@@ -558,7 +558,7 @@ export function ProfileClient({
                     <div>
                       <p className="text-5xl font-bold tracking-tight text-white">{performance.score}</p>
                       <p className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-blue-300">
-                        Syntra Index
+                        jetlabs Index
                       </p>
                     </div>
                   </div>

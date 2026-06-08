@@ -254,7 +254,7 @@ export function RegisterForm({ callbackUrl }: RegisterFormProps) {
                 Faculty access
               </p>
               <h1 className="text-balance text-3xl">
-                Join Syntra with institution-ready onboarding
+                Join jetlabs with institution-ready onboarding
               </h1>
               <p className="text-sm leading-7 text-muted-foreground sm:text-base">
                 {roleContent.description}
