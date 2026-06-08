@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireRole } from "@/lib/auth/session";
 import { toggleProblemBookmark } from "@/lib/services/problem-market-service";
 import { db } from "@/lib/db";
+import { generateUniqueTeamCode } from "@/lib/actions/team-actions";
 
 const toggleBookmarkSchema = z.object({
   problemId: z.string().min(1, "Problem ID is required."),
@@ -116,6 +117,9 @@ export async function selectProblemAsProjectAction(input: unknown) {
         },
       });
 
+      // Generate a unique team code
+      const teamCode = await generateUniqueTeamCode(tx);
+
       // Create Team
       const team = await tx.team.create({
         data: {
@@ -124,6 +128,7 @@ export async function selectProblemAsProjectAction(input: unknown) {
           projectTitle: project.title,
           facultyId: faculty.id,
           projectId: project.id,
+          teamCode: teamCode,
         },
       });
 

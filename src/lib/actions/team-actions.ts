@@ -7,6 +7,30 @@ import { db } from "@/lib/db";
 import { DifficultyLevel } from "@prisma/client";
 import { hash } from "bcryptjs";
 
+export const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+export function generateCode(length = 6) {
+  return Array.from({ length })
+    .map(() => CHARS[Math.floor(Math.random() * CHARS.length)])
+    .join("");
+}
+
+export async function generateUniqueTeamCode(prismaClient: any) {
+  let code;
+  let exists;
+
+  do {
+    code = generateCode();
+    exists = await prismaClient.team.findUnique({
+      where: {
+        teamCode: code,
+      },
+    });
+  } while (exists);
+
+  return code;
+}
+
 const createTeamSchema = z.object({
   name: z.string().trim().min(3, "Team name must be at least 3 characters."),
   studentNames: z.array(z.string()).optional(),
@@ -49,6 +73,11 @@ export async function createTeamAction(input: unknown) {
         },
       });
 
+      // Generate a unique team code
+      const teamCode = await generateUniqueTeamCode(tx);
+      console.log("Generated Team Code:", teamCode);
+      console.log("Saving Team:", name);
+
       // 2. Create Team
       const team = await tx.team.create({
         data: {
@@ -57,8 +86,11 @@ export async function createTeamAction(input: unknown) {
           projectTitle: project.title,
           facultyId,
           projectId: project.id,
+          teamCode: teamCode,
         },
       });
+
+      console.log("Created Team:", team.id);
 
       // 2b. Look up or create students by name and add memberships
       if (studentNames && studentNames.length > 0) {
@@ -196,9 +228,16 @@ export async function createTeamAction(input: unknown) {
     revalidatePath("/faculty/management/teams-batches");
     revalidatePath("/faculty/teams");
 
+    const teamWithCode = {
+      ...result.team,
+      team_code: result.team.teamCode,
+    };
+
     return {
       success: true,
       message: `Successfully created Team: "${result.team.name}"!`,
+      team: teamWithCode,
+      teamCode: result.team.teamCode,
     };
   } catch (error) {
     console.error("Failed to create team:", error);

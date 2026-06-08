@@ -136,7 +136,16 @@ export function FacultyDashboardView({ data }: FacultyDashboardViewProps) {
         studentNames: studentNames.filter((name) => name.trim().length > 0),
       });
       if (response.success) {
-        toast.success(response.message);
+        toast.success(
+          <div>
+            <p className="font-bold text-slate-900">Team Created Successfully</p>
+            <p className="mt-1 text-sm text-slate-700">
+              Team Code: <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono font-bold text-indigo-600">{response.teamCode}</code>
+            </p>
+            <p className="mt-1 text-xs text-slate-500">Share this code with students to join the team.</p>
+          </div>,
+          { duration: 8000 }
+        );
         setIsCreateModalOpen(false);
         setStudentNames(["", "", "", "", "", ""]);
         setShowStudents(false);
