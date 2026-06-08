@@ -451,30 +451,30 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                     data.welcome.projectCategory || ""
                   );
                   return (
-                    <div className="rounded-xl border-0 bg-block-navy p-6 text-white flex flex-col justify-between shadow-none">
+                    <div className="rounded-xl border border-border bg-card p-6 text-foreground flex flex-col justify-between shadow-sm">
                       <div>
-                        <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3 mb-4">
+                        <div className="flex items-start justify-between gap-3 border-b border-border pb-3 mb-4">
                           <div>
-                            <p className="text-xs font-mono uppercase tracking-[0.05em] text-block-lilac">Active Week Focus</p>
-                            <h3 className="text-lg font-bold text-white mt-1 leading-snug font-sans">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Active Week Focus</p>
+                            <h3 className="text-lg font-bold text-foreground mt-1 leading-snug font-sans">
                               {focus.title}
                             </h3>
                           </div>
-                          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white border-0">
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-foreground">
                             <Clock3 className="size-4" />
                           </span>
                         </div>
 
-                        <p className="text-xs text-slate-300 leading-relaxed font-medium italic mb-4">
+                        <p className="text-xs text-muted-foreground leading-relaxed font-medium italic mb-4">
                           &ldquo;{focus.focus}&rdquo;
                         </p>
 
                         <div className="space-y-3">
-                          <p className="text-xs font-mono uppercase tracking-[0.05em] text-block-lilac">Tasks for this week</p>
+                          <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Tasks for this week</p>
                           <div className="space-y-2.5">
                             {focus.focus && focus.tasks.map((task, idx) => (
-                              <div key={idx} className="flex gap-2 text-xs leading-relaxed text-slate-200">
-                                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white font-mono text-[9px]">
+                              <div key={idx} className="flex gap-2 text-xs leading-relaxed text-foreground/80 font-medium">
+                                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-foreground font-mono text-[9px] font-semibold">
                                   {idx + 1}
                                 </span>
                                 <span>{task}</span>
@@ -484,8 +484,8 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                         </div>
                       </div>
 
-                      <div className="mt-6 pt-4 border-t border-white/10">
-                        <Button asChild className="w-full h-10 rounded-full bg-white hover:bg-white/90 text-black font-semibold flex items-center justify-center gap-1.5 shadow-none border-0">
+                      <div className="mt-6 pt-4 border-t border-border">
+                        <Button asChild variant="default" className="w-full h-10 rounded-xl font-semibold flex items-center justify-center gap-1.5 shadow-none">
                           <Link href="/student/execution/weekly-submissions">
                             Submit Proof of Work
                             <ArrowRight className="size-4" />
