@@ -328,19 +328,19 @@ export function ProfileClient({
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="size-16 border border-border shadow-lg">
-            <AvatarFallback className="bg-slate-900 text-white font-bold text-xl uppercase">
+            <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xl uppercase">
               {user.name.slice(0, 2)}
             </AvatarFallback>
           </Avatar>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900">{user.name}</h1>
+              <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground">{user.name}</h1>
               <VerificationBadge status={user.verificationStatus} />
             </div>
             <p className="text-sm text-muted-foreground">{user.email} &middot; Student Profile</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <Badge className="border-slate-200 bg-white text-slate-700">{batch}</Badge>
-              <Badge className="border-indigo-200 bg-indigo-50 text-indigo-700">Team: {teamName}</Badge>
+              <Badge className="border-border bg-card text-foreground">{batch}</Badge>
+              <Badge className="border-block-lilac/30 bg-block-lilac/10 text-indigo-950 font-semibold">Team: {teamName}</Badge>
             </div>
           </div>
         </div>
@@ -465,16 +465,16 @@ export function ProfileClient({
 
               <Card>
                 <CardHeader className="border-b border-border pb-5">
-                  <CardTitle className="text-xl text-slate-900">Dynamic Skills &amp; Verification</CardTitle>
+                  <CardTitle className="text-xl text-foreground">Dynamic Skills &amp; Verification</CardTitle>
                   <p className="text-xs text-muted-foreground mt-1">
                     Your key technical expertise and verification status.
                   </p>
                 </CardHeader>
-                <CardContent className="space-y-4 p-5 text-slate-900">
+                <CardContent className="space-y-4 p-5 text-foreground">
                   {user.skills ? (
                     <div className="flex flex-wrap gap-2">
                       {user.skills.split(",").map((s) => (
-                        <Badge key={s} className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs px-2.5 py-1">
+                        <Badge key={s} className="bg-block-mint/10 text-emerald-950 border-block-mint/20 text-xs px-2.5 py-1 font-semibold">
                           {s.trim()}
                         </Badge>
                       ))}
@@ -487,31 +487,31 @@ export function ProfileClient({
             </div>
 
             <div className="space-y-5">
-              <Card className="border-slate-900 bg-slate-950 text-white shadow-md">
+              <Card className="border-border bg-card text-foreground shadow-sm">
                 <CardContent className="space-y-5 p-5">
-                  <Badge className="border-white/10 bg-white/5 text-indigo-300 font-semibold">Active Capstone Project</Badge>
+                  <Badge className="border-block-lilac/30 bg-block-lilac/10 text-indigo-950 font-semibold">Active Capstone Project</Badge>
                   <div>
-                    <h2 className="text-xl font-bold tracking-tight text-white">{projectTitle}</h2>
-                    <p className="mt-2 text-xs leading-relaxed text-white/60">{projectDescription}</p>
+                    <h2 className="text-xl font-bold tracking-tight text-foreground">{projectTitle}</h2>
+                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{projectDescription}</p>
                   </div>
                   <div className="grid gap-3">
-                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/80">
-                      <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+                    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground/80">
+                      <CheckCircle2 className="size-4 text-success shrink-0" />
                       Advisor: {facultyName}
                     </div>
-                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/80">
-                      <Rocket className="size-4 text-indigo-400 shrink-0" />
+                    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground/80">
+                      <Rocket className="size-4 text-indigo-600 shrink-0" />
                       Status: {status.replaceAll("_", " ")}
                     </div>
-                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/80">
-                      <Target className="size-4 text-cyan-400 shrink-0" />
+                    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground/80">
+                      <Target className="size-4 text-cyan-600 shrink-0" />
                       Progress: {progress}% Complete
                     </div>
                     {team && (
                       <Button
                         type="button"
                         variant="destructive"
-                        className="mt-4 w-full h-10 rounded-xl font-semibold bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 border-0 shadow-md shadow-red-600/10"
+                        className="mt-4 w-full h-10 rounded-xl font-semibold border-0 shadow-sm"
                         onClick={() => setIsConfirmOpen(true)}
                       >
                         <AlertTriangle className="size-4" />
@@ -549,15 +549,15 @@ export function ProfileClient({
 
         {/* Performance Tab */}
         <TabsContent value="performance">
-          <Card className="overflow-hidden border-slate-900 bg-slate-950 text-white shadow-xl">
+          <Card className="overflow-hidden border-border bg-card text-foreground shadow-sm">
             <CardContent className="grid gap-6 p-6 lg:grid-cols-[240px_minmax(0,1fr)_340px] lg:items-center">
               <div className="flex justify-center">
-                <div className="relative grid size-44 place-items-center rounded-full bg-[conic-gradient(#60a5fa_0deg_328deg,rgba(255,255,255,0.12)_328deg_360deg)]">
-                  <div className="absolute inset-3 rounded-full border border-white/10" />
-                  <div className="grid size-30 place-items-center rounded-full bg-slate-950 text-center">
+                <div className="relative grid size-44 place-items-center rounded-full bg-[conic-gradient(var(--primary)_0deg_328deg,var(--border)_328deg_360deg)]">
+                  <div className="absolute inset-3 rounded-full border border-border bg-card" />
+                  <div className="relative z-10 grid size-30 place-items-center rounded-full text-center">
                     <div>
-                      <p className="text-5xl font-bold tracking-tight text-white">{performance.score}</p>
-                      <p className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-blue-300">
+                      <p className="text-5xl font-bold tracking-tight text-foreground">{performance.score}</p>
+                      <p className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
                         jetlabs Index
                       </p>
                     </div>
@@ -565,31 +565,31 @@ export function ProfileClient({
                 </div>
               </div>
               <div className="space-y-4">
-                <Badge className="border-white/10 bg-white/5 text-white/80">Composite Reputation Band</Badge>
-                <h2 className="text-2xl font-bold tracking-tight text-white">
+                <Badge className="border-block-lilac/30 bg-block-lilac/10 text-indigo-950 font-semibold">Composite Reputation Band</Badge>
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">
                   Dynamic performance score tracked live.
                 </h2>
-                <p className="text-xs leading-relaxed text-white/60">
+                <p className="text-xs leading-relaxed text-muted-foreground">
                   Calculated from attendance multi-factor, completion of milestones, reviewed weekly submissions, and mentor evaluations.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] text-white/70">
+                  <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[10px] text-muted-foreground font-semibold">
                     Attendance: {performance.attendanceScore}%
                   </span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] text-white/70">
+                  <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[10px] text-muted-foreground font-semibold">
                     Delivery: {performance.submissionScore}%
                   </span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] text-white/70">
+                  <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[10px] text-muted-foreground font-semibold">
                     Reviews: {performance.reviewScore}%
                   </span>
                 </div>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 text-xs space-y-2">
-                <p className="flex items-center gap-2 font-semibold text-white">
-                  <Zap className="size-4 text-yellow-400 shrink-0" />
+              <div className="rounded-3xl border border-border bg-muted/30 p-4 text-xs space-y-2">
+                <p className="flex items-center gap-2 font-semibold text-foreground">
+                  <Zap className="size-4 text-amber-500 shrink-0" />
                   Actionable Insights
                 </p>
-                <p className="leading-relaxed text-white/60">
+                <p className="leading-relaxed text-muted-foreground">
                   Review feedback response SLA directly impacts index scaling. Address mentor comments within 48h to secure consistency gains.
                 </p>
               </div>
@@ -770,7 +770,7 @@ export function ProfileClient({
               <Button
                 type="submit"
                 disabled={savingProfile}
-                className="h-10 rounded-xl font-semibold bg-indigo-650 hover:bg-indigo-700 text-white shadow-md px-5 border-0 text-xs"
+                className="h-10 rounded-xl font-semibold px-5 text-xs"
               >
                 {savingProfile ? (
                   <>

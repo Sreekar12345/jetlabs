@@ -464,20 +464,20 @@ export function FinalSubmissionClient({
       </div>
 
       {/* Lock Gate summary */}
-      <Card className="border-slate-200 bg-slate-950 text-white">
+      <Card className="border-border bg-card text-foreground shadow-sm">
         <CardContent className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-center">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/70">
-              <LockKeyhole className="size-3.5" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-block-lilac/30 bg-block-lilac/10 px-3 py-1.5 text-xs font-semibold text-indigo-950">
+              <LockKeyhole className="size-3.5 text-indigo-700" />
               Review gate
             </div>
             <div>
-              <h2 className="text-2xl font-semibold tracking-normal text-white">
+              <h2 className="text-2xl font-semibold tracking-normal text-foreground">
                 {readinessScore === 100
                   ? "Project Evaluation Unlocked"
                   : "Final Evaluation Locked"}
               </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
                 {readinessScore === 100
                   ? "All deliverables have been successfully logged! Faculty evaluators have been notified to score and authorize final viva defense scheduling."
                   : "Complete all 5 deliverables to unlock advisor review, project completion marks, and viva panel scheduling."}
@@ -485,31 +485,32 @@ export function FinalSubmissionClient({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-            <p className="text-sm font-semibold text-white">Deliverables status</p>
+          <div className="rounded-2xl border border-border bg-muted/30 p-4">
+            <p className="text-sm font-semibold text-foreground">Deliverables status</p>
             <div className="mt-4 space-y-3">
               {missingItems.length > 0 ? (
                 missingItems.map((item) => (
                   <div
                     key={item}
-                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/75"
+                    className="flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700"
                   >
-                    <AlertTriangle className="size-4 text-orange-300" />
+                    <AlertTriangle className="size-4 text-orange-650" />
                     Pending: {item}
                   </div>
                 ))
               ) : (
-                <div className="flex items-center gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
-                  <CheckCircle2 className="size-4 text-emerald-400" />
+                <div className="flex items-center gap-3 rounded-xl border border-block-mint/25 bg-block-mint/10 px-3 py-2 text-sm text-emerald-950 font-semibold">
+                  <CheckCircle2 className="size-4 text-emerald-600" />
                   All deliverables complete
                 </div>
               )}
             </div>
             <Button
               disabled={missingItems.length > 0}
+              variant="default"
               className={cn(
-                "mt-5 w-full rounded-xl bg-white text-slate-950",
-                missingItems.length > 0 ? "opacity-40" : "hover:bg-slate-100"
+                "mt-5 w-full rounded-xl font-semibold",
+                missingItems.length > 0 ? "opacity-40" : ""
               )}
             >
               <FileCheck2 className="size-4" />

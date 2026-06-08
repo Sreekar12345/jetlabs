@@ -255,23 +255,24 @@ export function VivaClient({
       }
     >
       {/* Simulation Banner */}
-      <Card className="overflow-hidden border-slate-900 bg-slate-950 text-white shadow-[0_25px_80px_rgba(15,23,42,0.18)]">
+      <Card className="overflow-hidden border-border bg-card text-foreground shadow-sm">
         <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/70">
-              <Mic className="size-3.5" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-block-lilac/30 bg-block-lilac/10 px-3 py-1.5 text-xs font-semibold text-indigo-950">
+              <Mic className="size-3.5 text-indigo-700" />
               Panel Rehearsal
             </div>
-            <h2 className="mt-5 text-3xl font-semibold tracking-normal text-white">
+            <h2 className="mt-5 text-3xl font-semibold tracking-normal text-foreground">
               Train for rapid-fire faculty cross-questioning.
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
               Simulate time pressure, follow-up questions, technical defense, and
               research review in one focused rehearsal environment.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button
-                className="rounded-xl bg-white text-slate-950 hover:bg-white/90"
+                variant="default"
+                className="rounded-xl font-semibold h-10 px-5 text-xs"
                 onClick={() => handleStartPractice(data.mockQuestions[0]?.id)}
               >
                 <Play className="size-4 mr-2" />
@@ -280,33 +281,33 @@ export function VivaClient({
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+          <div className="rounded-3xl border border-border bg-muted/30 p-5">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-white">Project context</p>
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-semibold text-emerald-300">
-                <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.12)]" />
+              <p className="text-sm font-semibold text-foreground">Project context</p>
+              <Badge className="border-block-mint/25 bg-block-mint/10 text-emerald-950 font-semibold">
+                <span className="size-1.5 rounded-full bg-emerald-600 mr-1.5" />
                 Live
-              </span>
+              </Badge>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-                <p className="text-xs text-white/50">Team</p>
-                <p className="mt-2 text-base font-semibold tracking-normal text-white truncate">
+              <div className="rounded-2xl border border-border bg-muted/40 p-3">
+                <p className="text-xs text-muted-foreground font-semibold">Team</p>
+                <p className="mt-2 text-base font-semibold tracking-normal text-foreground truncate">
                   {data.team}
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-                <p className="text-xs text-white/50">Mentor</p>
-                <p className="mt-2 text-base font-semibold tracking-normal text-white truncate">
+              <div className="rounded-2xl border border-border bg-muted/40 p-3">
+                <p className="text-xs text-muted-foreground font-semibold">Mentor</p>
+                <p className="mt-2 text-base font-semibold tracking-normal text-foreground truncate">
                   {data.mentor}
                 </p>
               </div>
             </div>
-            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs font-semibold uppercase tracking-normal text-white/45">
+            <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                 AI Diagnostic Summary
               </p>
-              <p className="mt-2 text-xs leading-5 text-white/70">
+              <p className="mt-2 text-xs leading-5 text-foreground/80">
                 {data.aiDiagnosis}
               </p>
             </div>

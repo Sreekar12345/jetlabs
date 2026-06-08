@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Trophy,
   Users2,
+  Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -230,19 +231,19 @@ export function PerformanceClient({
       </div>
 
       {/* Ring visual */}
-      <Card className="overflow-hidden border-slate-900 bg-slate-950 text-white shadow-xl">
+      <Card className="overflow-hidden border-border bg-card text-foreground shadow-sm">
         <CardContent className="grid gap-7 p-6 lg:grid-cols-[280px_minmax(0,1fr)_360px] lg:items-center">
           <div className="flex justify-center">
             <div
               className="relative grid size-48 shrink-0 place-items-center rounded-full"
               style={{
-                background: `conic-gradient(#22c55e 0deg ${Math.round(performance.score * 3.6)}deg, rgba(255,255,255,0.12) ${Math.round(performance.score * 3.6)}deg 360deg)`,
+                background: `conic-gradient(#1ea64a 0deg ${Math.round(performance.score * 3.6)}deg, var(--border) ${Math.round(performance.score * 3.6)}deg 360deg)`,
               }}
             >
-              <div className="grid size-36 place-items-center rounded-full border border-white/10 bg-slate-950">
+              <div className="grid size-36 place-items-center rounded-full border border-border bg-card">
                 <div className="text-center">
-                  <p className="text-5xl font-bold tracking-tight text-white">{performance.score}</p>
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
+                  <p className="text-5xl font-bold tracking-tight text-foreground">{performance.score}</p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-600">
                     {reputationText}
                   </p>
                 </div>
@@ -252,13 +253,13 @@ export function PerformanceClient({
 
           <div className="space-y-5">
             <div>
-              <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100">
+              <Badge className="border-block-mint/20 bg-block-mint/10 text-emerald-950 font-semibold">
                 Calculated from Platform Activities
               </Badge>
-              <h2 className="mt-4 text-2xl font-bold tracking-tight text-white">
+              <h2 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
                 Live Performance Index & Feedback.
               </h2>
-              <p className="mt-3 text-sm leading-relaxed text-white/70">
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 Your performance ranking tracks your submission consistency, attendance checks, and review loops. Closing feedback loops quickly maintains score momentum.
               </p>
             </div>
@@ -269,32 +270,38 @@ export function PerformanceClient({
                 ["Attendance", `${performance.attendanceScore}%`],
                 ["Evaluation", `${performance.reviewScore}%`],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-                  <p className="text-xs text-white/50">{label}</p>
-                  <p className="mt-1 text-base font-bold tracking-tight text-white">{value}</p>
+                <div key={label} className="rounded-2xl border border-border bg-muted/40 p-3">
+                  <p className="text-xs text-muted-foreground font-semibold">{label}</p>
+                  <p className="mt-1 text-base font-bold tracking-tight text-foreground">{value}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 text-xs space-y-4">
+          <div className="rounded-3xl border border-border bg-muted/30 p-5 text-xs space-y-4">
             <div>
-              <p className="font-semibold uppercase tracking-wider text-emerald-300 mb-2">Strengths</p>
+              <p className="font-semibold uppercase tracking-wider text-emerald-700 mb-2 flex items-center gap-1.5">
+                <Zap className="size-3.5 text-amber-500" />
+                Strengths
+              </p>
               <div className="space-y-1.5">
                 {strengths.map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-white/80">
-                    <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+                  <div key={item} className="flex items-center gap-2 text-foreground/80 font-medium">
+                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
                     {item}
                   </div>
                 ))}
               </div>
             </div>
             <div>
-              <p className="font-semibold uppercase tracking-wider text-orange-300 mb-2">Areas to Improve</p>
+              <p className="font-semibold uppercase tracking-wider text-orange-700 mb-2 flex items-center gap-1.5">
+                <AlertTriangle className="size-3.5 text-orange-600" />
+                Areas to Improve
+              </p>
               <div className="space-y-1.5">
                 {risks.map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-white/80">
-                    <AlertTriangle className="size-4 text-orange-400 shrink-0" />
+                  <div key={item} className="flex items-center gap-2 text-foreground/80 font-medium">
+                    <AlertTriangle className="size-4 text-orange-650 shrink-0" />
                     {item}
                   </div>
                 ))}
@@ -384,10 +391,10 @@ export function PerformanceClient({
         </Card>
 
         {/* Tier systems */}
-        <Card className="border-slate-900 bg-slate-950 text-white">
-          <CardHeader className="border-b border-white/10 pb-5">
+        <Card className="border-border bg-card text-foreground shadow-sm">
+          <CardHeader className="border-b border-border pb-5">
             <CardTitle className="text-xl">Platform Tier Status</CardTitle>
-            <p className="text-xs text-white/50">Performance levels are derived dynamically based on your jetlabs index score.</p>
+            <p className="text-xs text-muted-foreground">Performance levels are derived dynamically based on your jetlabs index score.</p>
           </CardHeader>
           <CardContent className="space-y-3 p-5 text-xs">
             {tiers.map((tier) => (
@@ -396,17 +403,17 @@ export function PerformanceClient({
                 className={cn(
                   "flex items-center justify-between rounded-2xl border px-4 py-3 font-semibold",
                   tier.active
-                    ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-100"
-                    : "border-white/10 bg-white/[0.04] text-white/60"
+                    ? "border-block-mint/25 bg-block-mint/10 text-emerald-950"
+                    : "border-border bg-muted/30 text-muted-foreground"
                 )}
               >
                 <span>{tier.label}</span>
                 {tier.active ? (
-                  <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100 text-[10px]">
+                  <Badge className="border-block-mint/25 bg-block-mint/10 text-emerald-950 text-[10px]">
                     Active Title
                   </Badge>
                 ) : (
-                  <CircleDot className="size-4 text-white/40" />
+                  <CircleDot className="size-4 text-muted-foreground/45" />
                 )}
               </div>
             ))}
