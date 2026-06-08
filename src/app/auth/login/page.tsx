@@ -20,6 +20,7 @@ export default async function AuthLoginPage({
   }
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const roleParam = getSingleSearchParam(resolvedSearchParams?.role) ?? null;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-4 py-12 sm:px-6 lg:px-8">
@@ -36,6 +37,7 @@ export default async function AuthLoginPage({
             getSingleSearchParam(resolvedSearchParams?.callbackUrl) ?? null
           }
           reason={getSingleSearchParam(resolvedSearchParams?.reason) ?? null}
+          initialRole={roleParam}
         />
       </div>
     </main>

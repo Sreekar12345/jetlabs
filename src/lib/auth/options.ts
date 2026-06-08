@@ -23,12 +23,15 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("Authorize called with credentials:", credentials);
         const parsed = loginSchema.safeParse(credentials);
 
         if (!parsed.success) {
+          console.log("Parsed validation failed:", parsed.error);
           return null;
         }
 
+        console.log("Parsed validation success, searching user by email:", parsed.data.email);
         const user = await db.user.findUnique({
           where: {
             email: parsed.data.email,
@@ -36,22 +39,29 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
+          console.log("User not found in DB");
           return null;
         }
 
+        console.log("User found in DB, verifying password. DB role:", user.role, "Parsed role:", parsed.data.role);
         const passwordValid = await verifyPassword(
           parsed.data.password,
           user.passwordHash,
         );
 
         if (!passwordValid) {
+          console.log("Password verification failed");
           return null;
         }
 
-        if (user.role !== "ADMIN" && user.role !== parsed.data.role) {
-          return null;
+        console.log("Password valid. Comparing roles...");
+        if (user.role !== parsed.data.role) {
+          console.log("Role comparison failed: DB role", user.role, "!= Parsed role", parsed.data.role);
+          const roleLabel = parsed.data.role === "ADMIN" ? "admin" : parsed.data.role.toLowerCase();
+          throw new Error(`This account is not registered as ${roleLabel}`);
         }
 
+        console.log("Authorize successful for user:", user.email);
         return {
           id: user.id,
           name: user.name,

@@ -26,7 +26,7 @@ export class AuthError extends Error {
 }
 
 function hasRequiredRole(role: UserRole, roles: UserRole[]) {
-  return role === "ADMIN" || roles.includes(role);
+  return roles.includes(role);
 }
 
 export async function getAuthSession() {

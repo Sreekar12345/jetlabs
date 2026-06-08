@@ -50,6 +50,11 @@ function getLoginReasonMessage(reason: string | null) {
 }
 
 function normalizeSelectedRole(value: unknown): LoginRole {
+  if (typeof value === "string") {
+    const val = value.toUpperCase();
+    if (val === "FACULTY") return "FACULTY";
+    if (val === "ADMIN") return "ADMIN";
+  }
   if (value === "FACULTY") return "FACULTY";
   if (value === "ADMIN") return "ADMIN";
   return "STUDENT";
@@ -58,11 +63,13 @@ function normalizeSelectedRole(value: unknown): LoginRole {
 type LoginFormProps = {
   callbackUrl?: string | null;
   reason?: string | null;
+  initialRole?: string | null;
 };
 
-export function LoginForm({ callbackUrl, reason }: LoginFormProps) {
+export function LoginForm({ callbackUrl, reason, initialRole }: LoginFormProps) {
   const router = useRouter();
   const safeCallbackUrl = getSafeCallbackUrl(callbackUrl);
+  const normalizedInitialRole = initialRole ? normalizeSelectedRole(initialRole) : null;
   const [rememberMe, setRememberMe] = useState(() => {
     if (typeof window === "undefined") {
       return false;
@@ -86,7 +93,11 @@ export function LoginForm({ callbackUrl, reason }: LoginFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues, undefined, LoginInput>({
     resolver: zodResolver(loginSchema),
-    defaultValues: DEFAULT_LOGIN_VALUES,
+    defaultValues: {
+      role: normalizedInitialRole ?? "STUDENT",
+      email: "",
+      password: "",
+    },
     mode: "onBlur",
     reValidateMode: "onChange",
   });
@@ -95,7 +106,7 @@ export function LoginForm({ callbackUrl, reason }: LoginFormProps) {
     useWatch({
       control,
       name: "role",
-      defaultValue: DEFAULT_LOGIN_VALUES.role,
+      defaultValue: normalizedInitialRole ?? DEFAULT_LOGIN_VALUES.role,
     }),
   );
   const roleContent = LOGIN_ROLE_CONTENT[activeRole];
@@ -117,7 +128,7 @@ export function LoginForm({ callbackUrl, reason }: LoginFormProps) {
         setValue("email", parsed.email, { shouldDirty: false });
       }
 
-      if (parsed.role) {
+      if (parsed.role && !normalizedInitialRole) {
         setValue("role", normalizeSelectedRole(parsed.role), {
           shouldDirty: false,
         });
@@ -125,7 +136,7 @@ export function LoginForm({ callbackUrl, reason }: LoginFormProps) {
     } catch {
       window.localStorage.removeItem(REMEMBER_ME_KEY);
     }
-  }, [setValue]);
+  }, [setValue, normalizedInitialRole]);
 
   function clearErrorState() {
     if (formError) {
