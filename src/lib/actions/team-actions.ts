@@ -7,29 +7,7 @@ import { db } from "@/lib/db";
 import { DifficultyLevel } from "@prisma/client";
 import { hash } from "bcryptjs";
 
-export const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-export function generateCode(length = 6) {
-  return Array.from({ length })
-    .map(() => CHARS[Math.floor(Math.random() * CHARS.length)])
-    .join("");
-}
-
-export async function generateUniqueTeamCode(prismaClient: any) {
-  let code;
-  let exists;
-
-  do {
-    code = generateCode();
-    exists = await prismaClient.team.findUnique({
-      where: {
-        teamCode: code,
-      },
-    });
-  } while (exists);
-
-  return code;
-}
+import { generateUniqueTeamCode } from "@/lib/utils/code-generator";
 
 const createTeamSchema = z.object({
   name: z.string().trim().min(3, "Team name must be at least 3 characters."),

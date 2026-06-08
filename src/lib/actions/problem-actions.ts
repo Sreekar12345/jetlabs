@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requireRole } from "@/lib/auth/session";
 import { toggleProblemBookmark } from "@/lib/services/problem-market-service";
 import { db } from "@/lib/db";
-import { generateUniqueTeamCode } from "@/lib/actions/team-actions";
+import { generateUniqueTeamCode } from "@/lib/utils/code-generator";
 
 const toggleBookmarkSchema = z.object({
   problemId: z.string().min(1, "Problem ID is required."),
