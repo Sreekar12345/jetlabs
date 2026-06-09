@@ -33,6 +33,38 @@ export async function submitReviewAction(input: unknown) {
       ...parsed.data,
     });
 
+    try {
+      const { logSystemEvent } = await import("@/lib/services/audit-service");
+      const { db: prismaDb } = await import("@/lib/db");
+      const sub = await prismaDb.submission.findUnique({
+        where: { id: parsed.data.submissionId },
+        select: { teamId: true, title: true },
+      });
+      const teamId = sub?.teamId || "unknown";
+
+      await logSystemEvent({
+        userId: session.user.id,
+        userRole: session.user.role,
+        actionType: parsed.data.decision === "APPROVED" 
+          ? "SUBMISSION_APPROVED" 
+          : parsed.data.decision === "REVISION_REQUIRED"
+          ? "REVISION_REQUESTED"
+          : "SUBMISSION_REJECTED",
+        eventCategory: "EVALUATION",
+        entityType: "Submission",
+        entityId: parsed.data.submissionId,
+        actionPerformed: `Review decision "${parsed.data.decision}" submitted for "${sub?.title || "Submission"}" with score ${parsed.data.score}.`,
+        metadata: {
+          score: parsed.data.score,
+          comments: parsed.data.comments,
+          decision: parsed.data.decision,
+          teamId,
+        },
+      });
+    } catch (auditError) {
+      console.error("Failed to log review audit:", auditError);
+    }
+
     revalidatePath("/faculty/review/review-queue");
     revalidatePath("/faculty/monitoring/project-health");
     revalidatePath("/faculty/dashboard");
@@ -60,6 +92,7 @@ const submissionActionSchema = z.object({
   type: z.nativeEnum(SubmissionType),
   title: z.string().trim().min(5, "Title must be at least 5 characters."),
   content: z.string().trim().min(10, "Content/evidence details must be at least 10 characters."),
+  fileIds: z.array(z.string()).optional(),
 });
 
 import { SubmissionType } from "@prisma/client";
@@ -84,10 +117,40 @@ export async function createStudentSubmissionAction(input: unknown) {
   }
 
   try {
-    await createStudentSubmission({
+    const submission = await createStudentSubmission({
       userId: session.user.id,
-      ...parsed.data,
+      type: parsed.data.type,
+      title: parsed.data.title,
+      content: parsed.data.content,
     });
+
+    try {
+      const { logSystemEvent } = await import("@/lib/services/audit-service");
+      await logSystemEvent({
+        userId: session.user.id,
+        userRole: "STUDENT",
+        actionType: "SUBMISSION_SUBMITTED",
+        eventCategory: "SUBMISSION",
+        entityType: "Submission",
+        entityId: submission.id,
+        actionPerformed: `Submitted project evidence "${parsed.data.title}" of type ${parsed.data.type}.`,
+        newState: JSON.stringify({
+          id: submission.id,
+          title: submission.title,
+          type: submission.type,
+          content: submission.content,
+        }),
+      });
+    } catch (auditError) {
+      console.error("Failed to log student submission audit:", auditError);
+    }
+
+    // Link uploaded files to this submission if provided
+    const fileIds = parsed.data.fileIds;
+    if (fileIds && fileIds.length > 0) {
+      const { associateFilesWithSubmission } = await import("@/lib/services/file-service");
+      await associateFilesWithSubmission(fileIds, submission.id);
+    }
 
     revalidatePath("/student/submissions");
     revalidatePath("/student/execution/weekly-submissions");
@@ -97,6 +160,7 @@ export async function createStudentSubmissionAction(input: unknown) {
 
     return {
       success: true,
+      submission,
     };
   } catch (error) {
     if (error instanceof Error && error.message === "STUDENT_NOT_IN_TEAM") {

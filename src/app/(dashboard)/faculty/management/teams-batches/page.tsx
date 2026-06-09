@@ -12,6 +12,8 @@ export default async function FacultyTeamsBatchesPage() {
       project: { include: { milestones: { orderBy: { position: "asc" } } } },
       submissions: { orderBy: { submittedAt: "desc" } },
       faculty: { select: { name: true } },
+      selectedProblemStatement: true,
+      tasks: { orderBy: [{ week: "asc" }, { createdAt: "desc" }] },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -82,6 +84,9 @@ export default async function FacultyTeamsBatchesPage() {
         ...(submissionCount > 0 ? [{ label: "First submission", type: "submission" as const, week: "W1" }] : []),
         ...(latestMilestone ? [{ label: latestMilestone.title, type: "review" as const, week: `W${Math.max(1, Math.ceil((Date.now() - team.createdAt.getTime()) / (7 * 24 * 60 * 60 * 1000)))}` }] : []),
       ],
+      selectedProblemStatement: team.selectedProblemStatement,
+      tasks: team.tasks,
+      projectId: team.projectId,
     };
   });
 

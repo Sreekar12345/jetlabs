@@ -60,3 +60,9 @@ build/
 
 # macOS
 DS_Store
+
+# runtime upload files
+/uploads
+
+# scratch directories
+/scratch

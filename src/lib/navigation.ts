@@ -86,6 +86,13 @@ const STUDENT_NAVIGATION: NavigationSection[] = [
     label: "Execution",
     items: [
       {
+        title: "Project Workspace",
+        href: "/student/project",
+        icon: Users2,
+        description: "Project management workspace, stage timeline, and task board.",
+        section: "Execution",
+      },
+      {
         title: "Execution Playbook",
         href: "/student/execution/execution-playbook",
         icon: ClipboardCheck,

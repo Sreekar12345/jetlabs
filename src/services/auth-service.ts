@@ -240,6 +240,8 @@ export async function registerWithEmailPassword(
 
 export async function signOutFromSession(): Promise<SignOutResult> {
   try {
+    await fetch("/api/auth/logout-audit", { method: "POST" }).catch(() => undefined);
+
     await signOut({
       redirect: false,
       callbackUrl: "/auth/login",

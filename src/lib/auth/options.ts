@@ -40,6 +40,18 @@ export const authOptions: NextAuthOptions = {
 
         if (!user) {
           console.log("User not found in DB");
+          try {
+            const { logSystemEvent } = await import("@/lib/services/audit-service");
+            await logSystemEvent({
+              userId: "unknown",
+              userRole: parsed.data.role,
+              actionType: "LOGIN_FAILED",
+              eventCategory: "AUTHENTICATION",
+              actionPerformed: `Login failed: User not found for email ${parsed.data.email}.`,
+            });
+          } catch (auditError) {
+            console.error("Failed to log user not found audit:", auditError);
+          }
           return null;
         }
 
@@ -51,16 +63,79 @@ export const authOptions: NextAuthOptions = {
 
         if (!passwordValid) {
           console.log("Password verification failed");
+          try {
+            const { logSystemEvent } = await import("@/lib/services/audit-service");
+            await logSystemEvent({
+              userId: user.id,
+              userRole: user.role,
+              actionType: "LOGIN_FAILED",
+              eventCategory: "AUTHENTICATION",
+              entityType: "User",
+              entityId: user.id,
+              actionPerformed: "Login failed: Invalid credentials (incorrect password).",
+            });
+          } catch (auditError) {
+            console.error("Failed to log login failure audit:", auditError);
+          }
           return null;
         }
 
         console.log("Password valid. Comparing roles...");
         if (user.role !== parsed.data.role) {
           console.log("Role comparison failed: DB role", user.role, "!= Parsed role", parsed.data.role);
+          try {
+            const { logSystemEvent } = await import("@/lib/services/audit-service");
+            await logSystemEvent({
+              userId: user.id,
+              userRole: user.role,
+              actionType: "LOGIN_FAILED",
+              eventCategory: "AUTHENTICATION",
+              entityType: "User",
+              entityId: user.id,
+              actionPerformed: `Login failed: Role mismatch. Expected ${parsed.data.role}, user has ${user.role}.`,
+            });
+          } catch (auditError) {
+            console.error("Failed to log role mismatch audit:", auditError);
+          }
           throw new Error("Invalid Credentials");
         }
 
+        if ((user as any).isActive === false) {
+          console.log("Account is deactivated:", user.email);
+          try {
+            const { logSystemEvent } = await import("@/lib/services/audit-service");
+            await logSystemEvent({
+              userId: user.id,
+              userRole: user.role,
+              actionType: "LOGIN_FAILED",
+              eventCategory: "AUTHENTICATION",
+              entityType: "User",
+              entityId: user.id,
+              actionPerformed: "Login failed: Account is deactivated.",
+            });
+          } catch (auditError) {
+            console.error("Failed to log deactivation login audit:", auditError);
+          }
+          throw new Error("Account Deactivated");
+        }
+
         console.log("Authorize successful for user:", user.email);
+
+        try {
+          const { logSystemEvent } = await import("@/lib/services/audit-service");
+          await logSystemEvent({
+            userId: user.id,
+            userRole: user.role,
+            actionType: "LOGIN",
+            eventCategory: "AUTHENTICATION",
+            entityType: "User",
+            entityId: user.id,
+            actionPerformed: "User successfully logged in.",
+          });
+        } catch (auditError) {
+          console.error("Failed to log login audit:", auditError);
+        }
+
         return {
           id: user.id,
           name: user.name,

@@ -14,6 +14,7 @@ export const studentDashboardData: StudentDashboardData = {
       "Your academic operating system is holding momentum across research, execution, and evaluation.",
     project: "Adaptive Research Copilot for IEEE-aligned Student Teams",
     cohort: "CSE Innovation Cell · Spring 2026",
+    userId: "stu-mock-1",
   },
   stats: [
     {
@@ -238,6 +239,8 @@ export const studentDashboardData: StudentDashboardData = {
     { week: "W8", literature: 71, experimentation: 61, writing: 55 },
     { week: "W9", literature: 79, experimentation: 68, writing: 62 },
   ],
+  team: null,
+  teamMembers: [],
 };
 
 export const facultyDashboardData: FacultyDashboardData = {

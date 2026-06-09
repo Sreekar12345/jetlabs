@@ -28,6 +28,7 @@ type SidebarPanelProps = SidebarProps & {
 
 const STUDENT_NAV_ORDER = [
   "Dashboard",
+  "Project Workspace",
   "Problem Market",
   "Weekly Submissions",
   "IEEE Paper",

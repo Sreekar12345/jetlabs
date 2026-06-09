@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { MilestoneStatus, SubmissionStatus, SubmissionType, type Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { getOrCreateWeeklyMilestones } from "@/lib/services/milestone-service";
 import { getTeamScopeWhere, hasAllowedRole } from "@/lib/permissions";
 import {
   average,
@@ -75,6 +76,23 @@ const studentDashboardInclude = {
                 },
               },
             },
+          },
+          selectedProblemStatement: true,
+          students: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+          tasks: {
+            orderBy: [
+              { week: "asc" },
+              { createdAt: "desc" },
+            ],
           },
           submissions: {
             orderBy: {
@@ -158,6 +176,13 @@ const facultyDashboardInclude = {
           createdAt: "desc",
         },
         take: 4,
+      },
+      selectedProblemStatement: true,
+      tasks: {
+        orderBy: [
+          { week: "asc" },
+          { createdAt: "desc" },
+        ],
       },
     },
   },
@@ -342,6 +367,58 @@ function getStudentActivityItems(record: StudentDashboardRecord): ActivityFeedIt
     .slice(0, 6);
 }
 
+async function checkAndTriggerDeadlineNotifications(userId: string, allWeeklyMilestones: any[]) {
+  const now = new Date();
+  for (const milestone of allWeeklyMilestones) {
+    if (!milestone.dueDate || milestone.status === "COMPLETED") continue;
+
+    const timeDiff = milestone.dueDate.getTime() - now.getTime();
+    const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+    // 1. Deadline Approaching: within 24 hours (and in the future)
+    if (hoursDiff > 0 && hoursDiff <= 24) {
+      const type = `DEADLINE_APPROACHING_W${milestone.weekNumber}`;
+      const existing = await db.notification.findFirst({
+        where: { userId, type },
+      });
+      if (!existing) {
+        await db.notification.create({
+          data: {
+            userId,
+            userRole: "STUDENT",
+            title: "Task Deadline Approaching",
+            message: `Week ${milestone.weekNumber} deadline is approaching! Due in less than 24 hours: "${milestone.title}".`,
+            type: "TASK_DEADLINE_APPROACHING",
+            relatedEntityId: milestone.id,
+            triggerEvent: "TASK_DEADLINE_APPROACHING",
+          },
+        });
+      }
+    }
+
+    // 2. Deadline Missed: dueDate in the past
+    if (hoursDiff < 0) {
+      const type = `DEADLINE_MISSED_W${milestone.weekNumber}`;
+      const existing = await db.notification.findFirst({
+        where: { userId, type },
+      });
+      if (!existing) {
+        await db.notification.create({
+          data: {
+            userId,
+            userRole: "STUDENT",
+            title: "Task Overdue",
+            message: `Week ${milestone.weekNumber} deadline was missed! "${milestone.title}" was due on ${milestone.dueDate.toLocaleDateString()}.`,
+            type: "TASK_OVERDUE",
+            relatedEntityId: milestone.id,
+            triggerEvent: "TASK_OVERDUE",
+          },
+        });
+      }
+    }
+  }
+}
+
 export async function getStudentDashboardData(
   userId: string,
 ): Promise<StudentDashboardData> {
@@ -360,6 +437,7 @@ export async function getStudentDashboardData(
         subtitle: "Your academic operating system is ready once a team is assigned.",
         project: "Project pending",
         cohort: "Team not assigned",
+        userId: userId || "",
       },
       stats: [],
       progressTrackers: [],
@@ -370,6 +448,8 @@ export async function getStudentDashboardData(
       feedback: [],
       activity: [],
       researchSeries: [],
+      team: null,
+      teamMembers: [],
     };
   }
 
@@ -431,6 +511,25 @@ export async function getStudentDashboardData(
       timestamp: formatDateTimeLabel(submission.reviewedAt ?? submission.submittedAt),
     }));
 
+  // Fetch weekly milestones & contributions dynamically
+  let currentWeekNumber = 1;
+  let currentMilestone = null;
+  let currentContribution = null;
+  let teamContributions = [];
+  let allWeeklyMilestones = [];
+
+  if (project) {
+    allWeeklyMilestones = await getOrCreateWeeklyMilestones(project.id, project.createdAt);
+    const activeMilestone = allWeeklyMilestones.find((m) => m.status !== "COMPLETED") || allWeeklyMilestones[allWeeklyMilestones.length - 1];
+    if (activeMilestone) {
+      currentWeekNumber = activeMilestone.weekNumber;
+      currentMilestone = activeMilestone;
+      teamContributions = activeMilestone.contributions || [];
+      currentContribution = teamContributions.find((c) => c.assignedTo === userId) || null;
+    }
+    await checkAndTriggerDeadlineNotifications(userId, allWeeklyMilestones);
+  }
+
   return {
     welcome: {
       title: `Welcome back, ${firstName(record.name)}`,
@@ -439,6 +538,7 @@ export async function getStudentDashboardData(
       projectDomain: project?.domain ?? "",
       projectCategory: project?.problem?.category ?? project?.difficulty ?? "",
       cohort: team?.batch ?? "Cohort pending",
+      userId: record.id,
     },
     stats: [
       {
@@ -539,6 +639,27 @@ export async function getStudentDashboardData(
       experimentation: snapshot.experimentationProgress,
       writing: snapshot.writingProgress,
     })),
+    selectedProblemStatement: team?.selectedProblemStatement ?? null,
+    tasks: team?.tasks ?? [],
+    currentWeekNumber,
+    currentMilestone,
+    currentContribution,
+    teamContributions,
+    allWeeklyMilestones,
+    team: team
+      ? {
+          id: team.id,
+          name: team.name,
+          batch: team.batch,
+        }
+      : null,
+    teamMembers: team
+      ? team.students.map((s) => ({
+          id: s.user.id,
+          name: s.user.name,
+          role: s.role,
+        }))
+      : [],
   };
 }
 

@@ -1,0 +1,213 @@
+import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
+import { requireSession, getSessionUserRole } from "@/lib/auth/session";
+import { logAnalyticsAudit } from "@/lib/services/analytics-service";
+import { PrintClient } from "./print-client";
+
+interface PageProps {
+  searchParams: Promise<{
+    type?: string;
+    teamId?: string;
+    batch?: string;
+    week?: string;
+  }>;
+}
+
+export default async function ReportsPrintPage({ searchParams }: PageProps) {
+  const session = await requireSession();
+  const role = getSessionUserRole(session);
+  const userId = session.user.id;
+
+  if (!role) {
+    redirect("/auth/login?reason=expired");
+  }
+
+  const params = await searchParams;
+  const type = params.type || "team";
+  const teamIdFilter = params.teamId;
+  const batchFilter = params.batch;
+  const weekFilter = params.week ? parseInt(params.week, 10) : undefined;
+
+  let reportTitle = "";
+  let headers: string[] = [];
+  let rows: any[] = [];
+
+  // Log report generation in audit logs
+  await logAnalyticsAudit(
+    userId,
+    "REPORT_GENERATION",
+    type.toUpperCase(),
+    "PDF",
+    `Triggered print-preview generation for ${type} report.`
+  );
+
+  // Fetch report data
+  if (type === "team") {
+    reportTitle = "Academic Project Teams Report";
+    headers = ["Team Name", "Batch", "Project Title", "Faculty Mentor", "Progress %", "Health", "Risk Score", "Status"];
+    
+    const teams = await db.team.findMany({
+      where: role === "FACULTY" ? { facultyId: userId } : undefined,
+      include: { project: true, faculty: { select: { name: true } } }
+    });
+    
+    let filtered = teams;
+    if (batchFilter) filtered = filtered.filter(t => t.batch === batchFilter);
+    if (teamIdFilter) filtered = filtered.filter(t => t.id === teamIdFilter);
+
+    rows = filtered.map(t => [
+      t.name,
+      t.batch,
+      t.project.title,
+      t.faculty.name,
+      `${t.project.progress}%`,
+      t.project.healthStatus,
+      t.project.riskScore,
+      t.status
+    ]);
+  } else if (type === "student") {
+    reportTitle = "Student Performance & operating Roster";
+    headers = ["Name", "Roll Number", "Batch", "Team", "Perf Score", "Attendance %", "Delivery %", "Review %"];
+
+    const students = await db.user.findMany({
+      where: {
+        role: "STUDENT",
+        memberships: role === "FACULTY" ? { some: { team: { facultyId: userId } } } : undefined
+      },
+      include: { memberships: { include: { team: true } }, performance: true }
+    });
+
+    rows = students.map(s => [
+      s.name,
+      s.rollNumber || "N/A",
+      s.memberships[0]?.team.batch || "N/A",
+      s.memberships[0]?.team.name || "N/A",
+      s.performance?.score ?? 0,
+      `${s.performance?.attendanceScore ?? 0}%`,
+      `${s.performance?.submissionScore ?? 0}%`,
+      `${s.performance?.reviewScore ?? 0}%`
+    ]);
+  } else if (type === "project") {
+    reportTitle = "Project Lifecycle & Health Status Report";
+    headers = ["Project Title", "Domain", "Difficulty", "Stage/Status", "Progress %", "Health", "Risk Score", "Team Name"];
+
+    const projects = await db.project.findMany({
+      where: role === "FACULTY" ? { team: { facultyId: userId } } : undefined,
+      include: { team: true }
+    });
+
+    rows = projects.map(p => [
+      p.title,
+      p.domain,
+      p.difficulty,
+      p.status,
+      `${p.progress}%`,
+      p.healthStatus,
+      p.riskScore,
+      p.team?.name || "N/A"
+    ]);
+  } else if (type === "submission") {
+    reportTitle = "Student Weekly Submissions Log";
+    headers = ["Team Name", "Submission Title", "Submission Type", "Status", "Submitted By", "Submitted Date", "Score"];
+
+    const submissions = await db.submission.findMany({
+      where: role === "FACULTY" ? { team: { facultyId: userId } } : undefined,
+      include: { team: true, submittedBy: { select: { name: true } } }
+    });
+
+    rows = submissions.map(s => [
+      s.team.name,
+      s.title,
+      s.type,
+      s.status,
+      s.submittedBy?.name || "N/A",
+      new Date(s.submittedAt).toLocaleDateString(),
+      s.score ?? "Pending"
+    ]);
+  } else if (type === "evaluation") {
+    reportTitle = "Faculty Evaluator Marks & Feedback Report";
+    headers = ["Team Name", "Week", "Evaluator", "Date", "Status", "Score", "Feedback Remarks"];
+
+    const evaluations = await db.evaluation.findMany({
+      where: role === "FACULTY" ? { facultyId: userId } : undefined,
+      include: { team: true, faculty: { select: { name: true } } }
+    });
+
+    rows = evaluations.map(e => [
+      e.team.name,
+      `W${e.weekNumber}`,
+      e.faculty.name,
+      new Date(e.reviewDate).toLocaleDateString(),
+      e.status,
+      `${e.score}/10`,
+      e.feedback || "No comments"
+    ]);
+  } else {
+    reportTitle = "System Activity & Platform Report";
+    headers = ["Metric Title", "Value Description"];
+    rows = [
+      ["Report Generated By", session.user.name],
+      ["Report Timestamp", new Date().toLocaleString()],
+      ["System Operations Mode", "Active"]
+    ];
+  }
+
+  return (
+    <div className="min-h-screen bg-white text-slate-900 p-8 max-w-5xl mx-auto font-sans">
+      {/* Header */}
+      <div className="border-b-2 border-slate-900 pb-6 mb-6 flex justify-between items-end">
+        <div>
+          <h1 className="text-2xl font-black uppercase tracking-wider text-slate-900">jetlabs reporting system</h1>
+          <h2 className="text-lg font-bold text-indigo-700 mt-1">{reportTitle}</h2>
+          <p className="text-xs text-slate-500 mt-2">
+            Generated on {new Date().toLocaleString()} · Scope: {role} Workspace
+          </p>
+        </div>
+        <div className="text-right text-xs">
+          <p className="font-extrabold">CONFIDENTIAL REPORT</p>
+          <p className="text-slate-400">jetlabs operating system</p>
+        </div>
+      </div>
+
+      {/* Main Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs border-collapse divide-y divide-slate-200">
+          <thead>
+            <tr className="bg-slate-50 text-slate-700 font-extrabold uppercase border-b border-slate-200">
+              {headers.map((h, i) => (
+                <th key={i} className="px-3 py-3 font-extrabold tracking-wider">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={headers.length} className="px-3 py-6 text-center text-slate-400 italic">
+                  No records matched the selected query parameters.
+                </td>
+              </tr>
+            ) : (
+              rows.map((row, rIdx) => (
+                <tr key={rIdx} className="hover:bg-slate-50/50 transition-colors">
+                  {row.map((val: any, cIdx: number) => (
+                    <td key={cIdx} className="px-3 py-2.5 font-medium text-slate-800">{String(val)}</td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-12 pt-6 border-t border-slate-200 text-center text-[10px] text-slate-400 flex justify-between">
+        <span>jetlabs capstone analytics engine</span>
+        <span>Page 1 of 1</span>
+        <span>Secure offline copy</span>
+      </div>
+
+      {/* Client Trigger Component */}
+      <PrintClient />
+    </div>
+  );
+}

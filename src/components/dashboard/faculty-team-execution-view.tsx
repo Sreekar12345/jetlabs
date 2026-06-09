@@ -75,6 +75,28 @@ type TeamSignal = {
   contribution: Array<{ member: string; value: number; status: string; role?: string; roleLabel?: string }>;
   heatmap: number[];
   timeline: Array<{ label: string; type: "submission" | "review" | "ieee" | "viva" | "risk" | "recovery"; week: string }>;
+  projectId?: string | null;
+  selectedProblemStatement?: {
+    id: string;
+    title: string;
+    summary: string;
+    description: string;
+    category: string;
+    domain: string;
+    difficulty: string;
+    source: string;
+    facultyGuide?: string | null;
+  } | null;
+  tasks?: Array<{
+    id: string;
+    teamId: string;
+    title: string;
+    description?: string | null;
+    week: number;
+    status: string;
+    createdAt: any;
+    updatedAt: any;
+  }>;
 };
 
 type FacultyTeamExecutionViewProps = {
@@ -246,6 +268,164 @@ function TimelineEvent({ team }: { team: TeamSignal }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function TeamTasksList({ team }: { team: TeamSignal }) {
+  const [tasks, setTasks] = useState<any[]>(team.tasks ?? []);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskWeek, setNewTaskWeek] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
+  const [loadingTaskId, setLoadingTaskId] = useState<string | null>(null);
+
+  // Sync state when active team changes
+  useMemo(() => {
+    setTasks(team.tasks ?? []);
+  }, [team.tasks]);
+
+  const handleStatusChange = async (taskId: string, currentStatus: string) => {
+    // Cycle status: PENDING -> IN_PROGRESS -> COMPLETED -> PENDING
+    const nextStatusMap: Record<string, string> = {
+      PENDING: "IN_PROGRESS",
+      IN_PROGRESS: "COMPLETED",
+      COMPLETED: "PENDING",
+    };
+    const nextStatus = nextStatusMap[currentStatus] || "PENDING";
+
+    setLoadingTaskId(taskId);
+    try {
+      const res = await fetch("/api/team/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, status: nextStatus }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setTasks((prev) =>
+            prev.map((t) => (t.id === taskId ? { ...t, status: nextStatus } : t))
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Error updating task status:", err);
+    } finally {
+      setLoadingTaskId(null);
+    }
+  };
+
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+
+    setIsAdding(true);
+    try {
+      const res = await fetch("/api/team/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newTaskTitle.trim(),
+          week: newTaskWeek,
+          teamId: team.id,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.task) {
+          setTasks((prev) => [...prev, data.task].sort((a, b) => a.week - b.week));
+          setNewTaskTitle("");
+        }
+      }
+    } catch (err) {
+      console.error("Error creating task:", err);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {tasks.length > 0 ? (
+        <div className="max-h-[220px] overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+          {tasks.map((task) => (
+            <div
+              key={task.id}
+              onClick={() => handleStatusChange(task.id, task.status)}
+              className={cn(
+                "flex items-center justify-between p-3 rounded-xl border text-left cursor-pointer transition-all hover:bg-slate-50",
+                task.status === "COMPLETED"
+                  ? "border-emerald-100 bg-emerald-50/20"
+                  : task.status === "IN_PROGRESS"
+                    ? "border-sky-100 bg-sky-50/20"
+                    : "border-slate-100 bg-slate-50/30"
+              )}
+            >
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-slate-800">{task.title}</p>
+                <p className="text-[10px] text-slate-400 font-semibold font-mono">Week {task.week}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {loadingTaskId === task.id ? (
+                  <span className="size-1.5 rounded-full bg-slate-400 animate-ping" />
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 border",
+                      task.status === "COMPLETED"
+                        ? "bg-emerald-100/50 border-emerald-250 text-emerald-800"
+                        : task.status === "IN_PROGRESS"
+                          ? "bg-sky-100/50 border-sky-250 text-sky-850"
+                          : "bg-slate-100 border-slate-200 text-slate-600"
+                    )}
+                  >
+                    {task.status.replace("_", " ")}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="py-6 text-center">
+          <p className="text-xs text-slate-400 font-medium">No tasks defined yet.</p>
+        </div>
+      )}
+
+      {/* Inline Form to add task */}
+      <form onSubmit={handleAddTask} className="pt-3 border-t border-slate-100 space-y-3">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assign new weekly task</p>
+        <div className="flex gap-2">
+          <Input
+            value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
+            placeholder="e.g. Finalize literature review draft"
+            className="h-8 text-xs rounded-lg border-slate-200 bg-white"
+            required
+          />
+          <div className="w-24 shrink-0">
+            <select
+              value={newTaskWeek}
+              onChange={(e) => setNewTaskWeek(Number(e.target.value))}
+              className="w-full h-8 text-xs rounded-lg border border-slate-200 bg-white px-2 focus:outline-none focus:ring-1 focus:ring-slate-950 font-mono"
+            >
+              {Array.from({ length: 12 }, (_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  Week {i + 1}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button
+            type="submit"
+            disabled={isAdding || !newTaskTitle.trim()}
+            className="h-8 px-3 rounded-lg text-xs font-semibold bg-slate-950 hover:bg-slate-800 text-white shrink-0 shadow-sm"
+          >
+            {isAdding ? "Adding..." : "Add"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
@@ -720,6 +900,50 @@ export function FacultyTeamExecutionView({ module, initialTeams }: FacultyTeamEx
                 </div>
               </div>
 
+              {/* Problem Statement & Tasks section */}
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Selected Problem Statement Card */}
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <Target className="size-5 text-indigo-500" />
+                    <h3 className="text-sm font-bold text-slate-850 tracking-wide uppercase">Selected Problem Statement</h3>
+                  </div>
+                  {activeTeam.selectedProblemStatement ? (
+                    <div className="space-y-3 pt-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-base font-bold text-slate-900 leading-tight">{activeTeam.selectedProblemStatement.title}</h4>
+                        <Badge variant="outline" className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-700 border-indigo-200 shrink-0">
+                          {activeTeam.selectedProblemStatement.difficulty}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-indigo-600 font-semibold">{activeTeam.selectedProblemStatement.domain} · {activeTeam.selectedProblemStatement.category}</p>
+                      <p className="text-xs text-slate-600 leading-relaxed">{activeTeam.selectedProblemStatement.description}</p>
+                      {activeTeam.selectedProblemStatement.facultyGuide && (
+                        <div className="rounded-xl bg-amber-50/50 border border-amber-100 p-3 mt-3">
+                          <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Faculty Guide Notes</p>
+                          <p className="text-xs text-amber-900 mt-1 leading-relaxed">{activeTeam.selectedProblemStatement.facultyGuide}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="py-6 text-center">
+                      <p className="text-xs text-slate-400 font-medium">No problem statement selected by the team lead yet.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Team Tasks Card */}
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <ClipboardCheck className="size-5 text-emerald-500" />
+                    <h3 className="text-sm font-bold text-slate-850 tracking-wide uppercase">Weekly Tasks</h3>
+                  </div>
+                  
+                  {/* Task list with interactive status updates */}
+                  <TeamTasksList team={activeTeam} />
+                </div>
+              </div>
+
               {/* Weekly Intensity Heatmap */}
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-100">
@@ -774,10 +998,19 @@ export function FacultyTeamExecutionView({ module, initialTeams }: FacultyTeamEx
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
                 <h3 className="text-sm font-bold text-slate-800 tracking-wide uppercase font-semibold">Faculty Mentor Actions</h3>
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                  <Button variant="outline" className="justify-start gap-2.5 rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-800 py-5 font-semibold text-xs shadow-sm">
-                    <ArrowUpRight className="size-4 text-slate-400" />
-                    Open Workspace
-                  </Button>
+                  {activeTeam.projectId ? (
+                    <Button asChild variant="outline" className="justify-start gap-2.5 rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-800 py-5 font-semibold text-xs shadow-sm">
+                      <Link href={`/faculty/projects/${activeTeam.projectId}`} className="flex items-center gap-2.5 w-full">
+                        <ArrowUpRight className="size-4 text-slate-400" />
+                        Open Workspace
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" disabled className="justify-start gap-2.5 rounded-xl border-slate-200 bg-white text-slate-400 py-5 font-semibold text-xs shadow-sm">
+                      <ArrowUpRight className="size-4 text-slate-350" />
+                      Open Workspace (No Project)
+                    </Button>
+                  )}
                   <Button variant="outline" className="justify-start gap-2.5 rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-800 py-5 font-semibold text-xs shadow-sm">
                     <ClipboardCheck className="size-4 text-slate-400" />
                     Send Review Request

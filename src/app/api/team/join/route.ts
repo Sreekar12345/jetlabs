@@ -161,7 +161,75 @@ export async function POST(request: NextRequest) {
           detail: `${user.name || "Student"} joined team "${team.name}" using Team Code "${teamCode}".`,
         },
       });
+
+      // 5d. Trigger Notifications
+      // Notify the joining student
+      await tx.notification.create({
+        data: {
+          userId,
+          userRole: "STUDENT",
+          title: "Team Joined",
+          message: `You have successfully joined team "${team.name}".`,
+          type: "TEAM_JOINED",
+          relatedEntityId: team.id,
+          triggerEvent: "TEAM_JOINED",
+        },
+      });
+
+      // Notify the Faculty Advisor
+      await tx.notification.create({
+        data: {
+          userId: team.facultyId,
+          userRole: "FACULTY",
+          title: "Team Joined",
+          message: `Student "${user.name}" has joined team "${team.name}".`,
+          type: "TEAM_JOINED",
+          relatedEntityId: team.id,
+          triggerEvent: "TEAM_JOINED",
+        },
+      });
+
+      // Notify existing team members
+      const existingMembers = await tx.teamMember.findMany({
+        where: {
+          teamId: team.id,
+          userId: { not: userId },
+        },
+      });
+      for (const m of existingMembers) {
+        await tx.notification.create({
+          data: {
+            userId: m.userId,
+            userRole: "STUDENT",
+            title: "Team Joined",
+            message: `Student "${user.name}" has joined your team "${team.name}".`,
+            type: "TEAM_JOINED",
+            relatedEntityId: team.id,
+            triggerEvent: "TEAM_JOINED",
+          },
+        });
+      }
     });
+
+    try {
+      const { logSystemEvent } = await import("@/lib/services/audit-service");
+      await logSystemEvent({
+        userId,
+        userRole: "STUDENT",
+        actionType: "TEAM_JOINED",
+        eventCategory: "TEAM_MANAGEMENT",
+        entityType: "Team",
+        entityId: team.id,
+        actionPerformed: `Student "${user.name || "Student"}" joined team "${team.name}" (Code: ${teamCode}).`,
+        metadata: {
+          teamId: team.id,
+          teamName: team.name,
+          teamCode,
+        },
+      });
+    } catch (auditError) {
+      console.error("Failed to log team join audit:", auditError);
+    }
 
     console.log(`Notification sent: Student ${user.name} joined team ${team.name}. Faculty advisor ${team.facultyId} and mentor ${team.mentorId || "N/A"} notified.`);
 

@@ -73,6 +73,7 @@ export type StudentDashboardData = {
     projectDomain?: string;
     projectCategory?: string;
     cohort: string;
+    userId: string;
   };
   stats: DashboardStat[];
   progressTrackers: Array<{
@@ -118,6 +119,42 @@ export type StudentDashboardData = {
     literature: number;
     experimentation: number;
     writing: number;
+  }>;
+  selectedProblemStatement?: {
+    id: string;
+    title: string;
+    summary: string;
+    description: string;
+    category: string;
+    domain: string;
+    difficulty: string;
+    source: string;
+    facultyGuide?: string | null;
+  } | null;
+  tasks?: Array<{
+    id: string;
+    teamId: string;
+    title: string;
+    description?: string | null;
+    week: number;
+    status: string;
+    createdAt: any;
+    updatedAt: any;
+  }>;
+  currentWeekNumber?: number;
+  currentMilestone?: any;
+  currentContribution?: any;
+  teamContributions?: any[];
+  allWeeklyMilestones?: any[];
+  team?: {
+    id: string;
+    name: string;
+    batch: string;
+  } | null;
+  teamMembers?: Array<{
+    id: string;
+    name: string;
+    role: string;
   }>;
 };
 
@@ -184,6 +221,11 @@ export type FacultyDashboardData = {
     submitted: number;
     pending: number;
   }>;
+  assignedTeams?: any[];
+  allSubmissions?: any[];
+  allContributions?: any[];
+  notifications?: any[];
+  auditLogs?: any[];
 };
 
 export type ProblemListing = {

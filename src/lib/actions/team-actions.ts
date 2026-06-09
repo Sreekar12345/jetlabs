@@ -8,6 +8,7 @@ import { DifficultyLevel } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 import { generateUniqueTeamCode } from "@/lib/utils/code-generator";
+import { initializeProjectWeeklyMilestones } from "@/lib/services/milestone-service";
 
 const createTeamSchema = z.object({
   name: z.string().trim().min(3, "Team name must be at least 3 characters."),
@@ -70,6 +71,8 @@ export async function createTeamAction(input: unknown) {
           healthStatus: "LOW",
         },
       });
+
+
 
       // Generate a unique team code
       const teamCode = await generateUniqueTeamCode(tx);
@@ -205,11 +208,105 @@ export async function createTeamAction(input: unknown) {
         },
       });
 
+      // 4b. Trigger notifications for team creation & lead assignment
+      const dbMembers = await tx.teamMember.findMany({
+        where: { teamId: team.id },
+      });
+      for (const member of dbMembers) {
+        const isLead = member.role === "TEAM_LEAD";
+        await tx.notification.create({
+          data: {
+            userId: member.userId,
+            userRole: "STUDENT",
+            title: isLead ? "Team Lead Assigned" : "Team Created",
+            message: isLead
+              ? `You have been assigned as the Team Lead for team "${teamName}" by ${facultyName}.`
+              : `You have been added to team "${teamName}" by ${facultyName}.`,
+            type: isLead ? "TEAM_LEAD_ASSIGNED" : "TEAM_CREATED",
+            relatedEntityId: team.id,
+            triggerEvent: "TEAM_CREATED",
+          },
+        });
+      }
+
+      // Notify faculty guide
+      await tx.notification.create({
+        data: {
+          userId: facultyId,
+          userRole: "FACULTY",
+          title: "Team Created",
+          message: `Successfully created team "${teamName}" with project "${projectTitle}".`,
+          type: "TEAM_CREATED",
+          relatedEntityId: team.id,
+          triggerEvent: "TEAM_CREATED",
+        },
+      });
+
+      // Initialize weekly milestones and automated tasks now that the team memberships exist
+      await initializeProjectWeeklyMilestones(project.id, tx, project.createdAt);
+
       return { team, project };
     }, {
       maxWait: 15000,
       timeout: 30000,
     });
+
+    try {
+      const { logSystemEvent } = await import("@/lib/services/audit-service");
+      await logSystemEvent({
+        userId: session.user.id,
+        userRole: session.user.role,
+        actionType: "TEAM_CREATED",
+        eventCategory: "TEAM_MANAGEMENT",
+        entityType: "Team",
+        entityId: result.team.id,
+        actionPerformed: `Faculty "${session.user.name}" created team "${result.team.name}" with project "${result.project.title}".`,
+        newState: JSON.stringify({
+          id: result.team.id,
+          name: result.team.name,
+          code: result.team.teamCode,
+          projectId: result.team.projectId,
+        }),
+      });
+
+      const members = await db.teamMember.findMany({
+        where: { teamId: result.team.id },
+        include: { user: { select: { name: true } } },
+      });
+
+      for (const member of members) {
+        await logSystemEvent({
+          userId: session.user.id,
+          userRole: session.user.role,
+          actionType: "TEAM_MEMBER_ADDED",
+          eventCategory: "TEAM_MANAGEMENT",
+          entityType: "Team",
+          entityId: result.team.id,
+          actionPerformed: `Added student "${member.user.name}" to team "${result.team.name}" as ${member.role === "TEAM_LEAD" ? "Team Lead" : "Member"}.`,
+          metadata: {
+            memberUserId: member.userId,
+            memberRole: member.role,
+          },
+        });
+
+        if (member.role === "TEAM_LEAD") {
+          await logSystemEvent({
+            userId: session.user.id,
+            userRole: session.user.role,
+            actionType: "TEAM_LEAD_ASSIGNED",
+            eventCategory: "TEAM_MANAGEMENT",
+            entityType: "Team",
+            entityId: result.team.id,
+            actionPerformed: `Assigned student "${member.user.name}" as Team Lead for team "${result.team.name}".`,
+            metadata: {
+              memberUserId: member.userId,
+            },
+          });
+        }
+      }
+    } catch (auditError) {
+      console.error("Failed to log team creation audit:", auditError);
+    }
 
     // Revalidate paths
     revalidatePath("/faculty");

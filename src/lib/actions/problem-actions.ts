@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/auth/session";
 import { toggleProblemBookmark } from "@/lib/services/problem-market-service";
 import { db } from "@/lib/db";
 import { generateUniqueTeamCode } from "@/lib/utils/code-generator";
+import { initializeProjectWeeklyMilestones } from "@/lib/services/milestone-service";
 
 const toggleBookmarkSchema = z.object({
   problemId: z.string().min(1, "Problem ID is required."),
@@ -83,14 +84,15 @@ export async function selectProblemAsProjectAction(input: unknown) {
       };
     }
 
+    if (!existingMembership || existingMembership.role !== "TEAM_LEAD") {
+      return {
+        success: false,
+        message: "Only the Team Lead can select a Problem Statement.",
+        status: 403,
+      };
+    }
+
     if (existingMembership) {
-      if (existingMembership.role !== "TEAM_LEAD") {
-        return {
-          success: false,
-          message: "Only the Team Lead can select a Problem Statement.",
-          status: 403,
-        };
-      }
 
       // Fetch team details
       const team = await db.team.findUnique({
@@ -106,14 +108,25 @@ export async function selectProblemAsProjectAction(input: unknown) {
 
       // Update existing team project
       await db.$transaction(async (tx: any) => {
+        // Release old problem statement if any
+        if (team.selectedProblemStatementId && team.selectedProblemStatementId !== problem.id) {
+          await tx.problem.update({
+            where: { id: team.selectedProblemStatementId },
+            data: { isAssigned: false },
+          });
+        }
+
         await tx.project.update({
           where: { id: team.projectId },
           data: {
             title: problem.title,
-            description: problem.summary,
+            description: problem.description || problem.summary,
             domain: problem.domain,
             difficulty: problem.difficulty,
             problemId: problem.id,
+            managementStatus: "CREATED",
+            progressPercentage: 0,
+            projectFacultyId: team.facultyId,
           },
         });
 
@@ -121,9 +134,49 @@ export async function selectProblemAsProjectAction(input: unknown) {
           where: { id: team.id },
           data: {
             projectTitle: problem.title,
+            selectedProblemStatementId: problem.id,
           },
         });
+
+        await tx.problem.update({
+          where: { id: problem.id },
+          data: { isAssigned: true },
+        });
+
+        // Regenerate milestones and automated weekly tasks
+        await tx.weeklyMilestone.deleteMany({
+          where: { projectId: team.projectId },
+        });
+        await initializeProjectWeeklyMilestones(team.projectId, tx, new Date());
       });
+
+      try {
+        const { logSystemEvent } = await import("@/lib/services/audit-service");
+        await logSystemEvent({
+          userId: session.user.id,
+          userRole: session.user.role,
+          actionType: "PROBLEM_STATEMENT_SELECTED",
+          eventCategory: "PROJECT",
+          entityType: "Project",
+          entityId: team.projectId,
+          actionPerformed: `Team lead "${userName}" selected Problem Statement "${problem.title}" for team "${team.name}".`,
+          metadata: {
+            problemId: problem.id,
+            teamId: team.id,
+          },
+        });
+        await logSystemEvent({
+          userId: session.user.id,
+          userRole: session.user.role,
+          actionType: "ROADMAP_GENERATED",
+          eventCategory: "PROJECT",
+          entityType: "Project",
+          entityId: team.projectId,
+          actionPerformed: `Roadmap and weekly milestones regenerated for project "${problem.title}".`,
+        });
+      } catch (auditError) {
+        console.error("Failed to log problem statement selection audit:", auditError);
+      }
 
       return {
         success: true,
@@ -164,7 +217,7 @@ export async function selectProblemAsProjectAction(input: unknown) {
       const project = await tx.project.create({
         data: {
           title: problem.title,
-          description: problem.summary,
+          description: problem.description || problem.summary,
           domain: problem.domain,
           difficulty: problem.difficulty,
           status: "DISCOVERY",
@@ -172,8 +225,13 @@ export async function selectProblemAsProjectAction(input: unknown) {
           riskScore: 0,
           healthStatus: "LOW",
           problemId: problem.id,
+          managementStatus: "CREATED",
+          progressPercentage: 0,
+          projectFacultyId: faculty.id,
         },
       });
+
+
 
       // Generate a unique team code
       const teamCode = await generateUniqueTeamCode(tx);
@@ -187,7 +245,14 @@ export async function selectProblemAsProjectAction(input: unknown) {
           facultyId: faculty.id,
           projectId: project.id,
           teamCode: teamCode,
+          selectedProblemStatementId: problem.id,
         },
+      });
+
+      // Mark selected Problem as assigned
+      await tx.problem.update({
+        where: { id: problem.id },
+        data: { isAssigned: true },
       });
 
       // Create TeamMember
@@ -285,8 +350,105 @@ export async function selectProblemAsProjectAction(input: unknown) {
         },
       });
 
+      // 4b. Trigger notifications for Project Created and Problem Statement Selected
+      // Notify the team lead (the user who ran this)
+      await tx.notification.create({
+        data: {
+          userId,
+          userRole: "STUDENT",
+          title: "Project Created",
+          message: `Your project "${project.title}" has been successfully created.`,
+          type: "PROJECT_CREATED",
+          relatedEntityId: project.id,
+          triggerEvent: "PROJECT_CREATED",
+        },
+      });
+
+      await tx.notification.create({
+        data: {
+          userId,
+          userRole: "STUDENT",
+          title: "Problem Statement Selected",
+          message: `You have selected the problem statement: "${problem.title}".`,
+          type: "PROBLEM_STATEMENT_SELECTED",
+          relatedEntityId: problem.id,
+          triggerEvent: "PROBLEM_STATEMENT_SELECTED",
+        },
+      });
+
+      // Notify the Faculty Advisor
+      await tx.notification.create({
+        data: {
+          userId: faculty.id,
+          userRole: "FACULTY",
+          title: "Project Created",
+          message: `A new project "${project.title}" has been created for your guided team.`,
+          type: "PROJECT_CREATED",
+          relatedEntityId: project.id,
+          triggerEvent: "PROJECT_CREATED",
+        },
+      });
+
+      await tx.notification.create({
+        data: {
+          userId: faculty.id,
+          userRole: "FACULTY",
+          title: "Problem Statement Selected",
+          message: `Team "${team.name}" has selected the problem statement: "${problem.title}".`,
+          type: "PROBLEM_STATEMENT_SELECTED",
+          relatedEntityId: problem.id,
+          triggerEvent: "PROBLEM_STATEMENT_SELECTED",
+        },
+      });
+
+      // Initialize weekly milestones and automated tasks now that the team lead membership exists
+      await initializeProjectWeeklyMilestones(project.id, tx, project.createdAt);
+
       return { team, project };
     });
+
+    try {
+      const { logSystemEvent } = await import("@/lib/services/audit-service");
+      await logSystemEvent({
+        userId,
+        userRole: "STUDENT",
+        actionType: "PROJECT_CREATED",
+        eventCategory: "PROJECT",
+        entityType: "Project",
+        entityId: result.project.id,
+        actionPerformed: `Student "${userName}" created project "${result.project.title}" for team "${result.team.name}".`,
+        newState: JSON.stringify({
+          id: result.project.id,
+          title: result.project.title,
+          teamId: result.team.id,
+        }),
+      });
+
+      await logSystemEvent({
+        userId,
+        userRole: "STUDENT",
+        actionType: "PROBLEM_STATEMENT_SELECTED",
+        eventCategory: "PROJECT",
+        entityType: "Project",
+        entityId: result.project.id,
+        actionPerformed: `Student "${userName}" selected Problem Statement "${problem.title}" for project "${result.project.title}".`,
+        metadata: {
+          problemId: problem.id,
+        },
+      });
+
+      await logSystemEvent({
+        userId,
+        userRole: "STUDENT",
+        actionType: "ROADMAP_GENERATED",
+        eventCategory: "PROJECT",
+        entityType: "Project",
+        entityId: result.project.id,
+        actionPerformed: `Roadmap and weekly milestones initialized for project "${result.project.title}".`,
+      });
+    } catch (auditError) {
+      console.error("Failed to log project allocation audits:", auditError);
+    }
 
     revalidatePath("/student");
     revalidatePath("/student/dashboard");
@@ -366,6 +528,15 @@ export async function discontinueCapstoneProjectAction() {
         ],
       },
     });
+
+    // Release problem statement if any
+    const currentProblemId = team.selectedProblemStatementId;
+    if (currentProblemId) {
+      await db.problem.update({
+        where: { id: currentProblemId },
+        data: { isAssigned: false },
+      });
+    }
 
     await db.team.delete({
       where: { id: teamId },

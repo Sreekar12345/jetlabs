@@ -119,28 +119,41 @@ model User {
   linkedinUrl          String?            @map("linkedin_url")
   skills               String?            @map("skills")
   bio                  String?            @map("bio")
+  facultyProjects      Project[]          @relation("ProjectFaculty")
+  assignedContributions Contribution[]   @relation("ContributionAssignee")
+  createdContributions  Contribution[]   @relation("ContributionAssigner")
+  evaluations           Evaluation[]     @relation("EvaluatedBy")
+  auditLogs             EvaluationAuditLog[] @relation("AuditLogger")
+  uploadedFiles         ProjectFile[]    @relation("UserUploadedFiles")
+  fileAuditLogs         FileAuditLog[]   @relation("UserFileAudits")
+  isActive             Boolean            @default(true) @map("is_active")
 
   @@index([role])
 }
 
 model Team {
-  id            String          @id @default(cuid())
-  name          String          @map("team_name")
-  batch         String
-  projectTitle  String
-  facultyId     String          @map("faculty_id")
-  projectId     String          @unique
-  teamCode      String?         @unique @map("team_code")
-  maxStudents   Int             @default(4) @map("max_students")
-  status        String          @default("ACTIVE")
-  mentorId      String?         @map("mentor_id")
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  faculty       User            @relation("FacultyTeams", fields: [facultyId], references: [id], onDelete: Restrict)
-  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  students      TeamMember[]
-  submissions   Submission[]
-  activityEvents ActivityEvent[]
+  id                           String          @id @default(cuid())
+  name                         String          @map("team_name")
+  batch                        String
+  projectTitle                 String
+  facultyId                    String          @map("faculty_id")
+  projectId                    String          @unique
+  teamCode                     String?         @unique @map("team_code")
+  maxStudents                  Int             @default(4) @map("max_students")
+  status                       String          @default("ACTIVE")
+  mentorId                     String?         @map("mentor_id")
+  selectedProblemStatementId   String?         @map("selected_problem_statement_id")
+  createdAt                    DateTime        @default(now())
+  updatedAt                    DateTime        @updatedAt
+  faculty                      User            @relation("FacultyTeams", fields: [facultyId], references: [id], onDelete: Restrict)
+  project                      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  selectedProblemStatement     Problem?        @relation("TeamSelectedProblem", fields: [selectedProblemStatementId], references: [id], onDelete: SetNull)
+  students                     TeamMember[]
+  submissions                  Submission[]
+  activityEvents               ActivityEvent[]
+  tasks                        TeamTask[]
+  evaluations                  Evaluation[]
+  files                        ProjectFile[]   @relation("TeamFiles")
 
   @@index([facultyId])
   @@index([batch])
@@ -175,11 +188,14 @@ model Problem {
   trendingScore        Int               @default(0)
   isFacultyRecommended Boolean           @default(false)
   createdById          String?
+  isAssigned           Boolean           @default(false)
+  facultyGuide         String?
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
   createdBy            User?             @relation("ProblemCreator", fields: [createdById], references: [id], onDelete: SetNull)
   bookmarks            ProblemBookmark[]
   projects             Project[]
+  selectedByTeams      Team[]            @relation("TeamSelectedProblem")
 
   @@index([category])
   @@index([domain])
@@ -206,6 +222,13 @@ model Project {
   milestones     ProjectMilestone[]
   analytics      AnalyticsSnapshot[]
   activityEvents ActivityEvent[]
+  managementStatus   String         @default("CREATED")
+  progressPercentage Int            @default(0)
+  projectFacultyId   String?        @map("project_faculty_id")
+  projectFaculty     User?          @relation("ProjectFaculty", fields: [projectFacultyId], references: [id], onDelete: SetNull)
+  projectTasks       ProjectTask[]
+  weeklyMilestones   WeeklyMilestone[]
+  evaluations        Evaluation[]
 
   @@index([status])
   @@index([healthStatus])
@@ -384,12 +407,243 @@ model StudentChangeLog {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  message   String
-  type      String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at")
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  userRole        String?   @map("user_role")
+  title           String?
+  message         String
+  type            String
+  relatedEntityId String?   @map("related_entity_id")
+  read            Boolean   @default(false)
+  status          String    @default("UNREAD")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  readAt          DateTime? @map("read_at")
+  triggerEvent    String?   @map("trigger_event")
 
   @@map("notifications")
+}
+
+model TeamTask {
+  id          String   @id @default(cuid())
+  teamId      String   @map("team_id")
+  title       String
+  description String?
+  week        Int
+  status      String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+}
+
+model ProjectTask {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime? @map("due_date")
+  status      String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  projectId   String    @map("project_id")
+  createdBy   String    @map("created_by")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+enum WeeklyMilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  REVIEW_PENDING
+  COMPLETED
+}
+
+enum ContributionStatus {
+  ASSIGNED
+  IN_PROGRESS
+  SUBMITTED
+  UNDER_REVIEW
+  REVIEWED
+  REJECTED
+}
+
+model WeeklyMilestone {
+  id            String                @id @default(cuid())
+  projectId     String                @map("project_id")
+  weekNumber    Int                   @map("week_number")
+  title         String
+  description   String?
+  startDate     DateTime?             @map("start_date")
+  dueDate       DateTime?             @map("due_date")
+  status        WeeklyMilestoneStatus @default(NOT_STARTED)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  project       Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  contributions Contribution[]
+
+  @@unique([projectId, weekNumber])
+  @@index([projectId])
+}
+
+model Contribution {
+  id                  String             @id @default(cuid())
+  milestoneId         String             @map("milestone_id")
+  assignedTo          String             @map("assigned_to")
+  assignedBy          String             @map("assigned_by")
+  title               String
+  description         String?
+  status              ContributionStatus @default(ASSIGNED)
+  submissionUrl       String?            @map("submission_url")
+  notes               String?
+  feedback            String?
+  submittedAt         DateTime?          @map("submitted_at")
+  reviewedAt          DateTime?          @map("reviewed_at")
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  githubUrl           String?            @map("github_url")
+  demoUrl             String?            @map("demo_url")
+  uploadedFiles       String?            @map("uploaded_files")
+  isLate              Boolean?           @default(false) @map("is_late")
+  originalDeadline    DateTime?          @map("original_deadline")
+  delayDuration       Int?               @map("delay_duration")
+  facultyMarks        Int?               @map("faculty_marks")
+  feedbackSuggestions String?            @map("feedback_suggestions")
+  milestone           WeeklyMilestone    @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  assignee            User               @relation("ContributionAssignee", fields: [assignedTo], references: [id], onDelete: Cascade)
+  assigner            User               @relation("ContributionAssigner", fields: [assignedBy], references: [id], onDelete: Cascade)
+  evaluations         Evaluation[]
+
+  @@index([milestoneId])
+  @@index([assignedTo])
+}
+
+enum EvaluationStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  REVISION_REQUIRED
+  RESUBMITTED
+}
+
+model Evaluation {
+  id                  String             @id @default(cuid())
+  teamId              String             @map("team_id")
+  projectId           String             @map("project_id")
+  weekNumber          Int                @map("week_number")
+  submissionId        String             @map("submission_id")
+  facultyId           String             @map("faculty_id")
+  reviewDate          DateTime           @default(now()) @map("review_date")
+  status              EvaluationStatus   @default(PENDING_REVIEW)
+  feedback            String?
+  score               Float              @default(0.0)
+  completeness        Float              @default(0.0)
+  quality             Float              @default(0.0)
+  documentation       Float              @default(0.0)
+  timeliness          Float              @default(0.0)
+  revisionNotes       String?            @map("revision_notes")
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  team                Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  project             Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  contribution        Contribution       @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  faculty             User               @relation("EvaluatedBy", fields: [facultyId], references: [id], onDelete: Restrict)
+  auditLogs           EvaluationAuditLog[]
+
+  @@index([teamId])
+  @@index([projectId])
+  @@index([submissionId])
+}
+
+model EvaluationAuditLog {
+  id             String           @id @default(cuid())
+  evaluationId   String           @map("evaluation_id")
+  facultyId      String           @map("faculty_id")
+  previousStatus String           @map("previous_status")
+  newStatus      String           @map("new_status")
+  timestamp      DateTime         @default(now())
+
+  evaluation     Evaluation       @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  faculty        User             @relation("AuditLogger", fields: [facultyId], references: [id], onDelete: Restrict)
+
+  @@index([evaluationId])
+  @@index([timestamp])
+}
+
+model ProjectFile {
+  id           String           @id @default(cuid())
+  fileName     String           @map("file_name")
+  fileType     String           @map("file_type")
+  fileSize     Int              @map("file_size")
+  storagePath  String           @map("storage_path")
+  uploadedById String           @map("uploaded_by_id")
+  teamId       String           @map("team_id")
+  submissionId String?          @map("submission_id")
+  version      Int              @default(1)
+  isLatest     Boolean          @default(true) @map("is_latest")
+  parentFileId String?          @map("parent_file_id")
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  uploadedBy   User             @relation("UserUploadedFiles", fields: [uploadedById], references: [id], onDelete: Cascade)
+  team         Team             @relation("TeamFiles", fields: [teamId], references: [id], onDelete: Cascade)
+  auditLogs    FileAuditLog[]
+
+  @@index([teamId])
+  @@index([submissionId])
+}
+
+model FileAuditLog {
+  id          String       @id @default(cuid())
+  fileId      String       @map("file_id")
+  userId      String       @map("user_id")
+  action      String       
+  details     String?
+  timestamp   DateTime     @default(now())
+
+  file        ProjectFile  @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  user        User         @relation("UserFileAudits", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([fileId])
+  @@index([timestamp])
+}
+
+model AnalyticsAuditLog {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  timestamp    DateTime @default(now())
+  actionType   String   // REPORT_GENERATION, EXPORT_ACTIVITY, ANALYTICS_ACCESS
+  reportType   String?  // Team, Faculty, Student, Project, Submission, Evaluation, System
+  exportFormat String?  // PDF, Excel, CSV, WEB
+  details      String?
+
+  @@index([userId])
+  @@index([timestamp])
+  @@map("analytics_audit_logs")
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  userRole        String   @map("user_role")
+  actionType      String   @map("action_type") // USER_ACTIVATE, USER_DEACTIVATE, USER_STATUS_RESET, LOGIN, SUBMISSION_CREATE, EVALUATION_SUBMIT, NOTIFICATION_CREATE, UNAUTHORIZED_ACCESS
+  entityAffected  String?  @map("entity_affected")
+  details         String?
+  timestamp       DateTime @default(now())
+  eventCategory   String?  @map("event_category")
+  entityType      String?  @map("entity_type")
+  entityId        String?  @map("entity_id")
+  actionPerformed String?  @map("action_performed")
+  previousState   String?  @map("previous_state")
+  newState        String?  @map("new_state")
+  ipAddress       String?  @map("ip_address")
+  metadata        String?  @map("metadata")
+
+  @@index([userId])
+  @@index([actionType])
+  @@index([eventCategory])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([timestamp])
+  @@map("audit_logs")
 }

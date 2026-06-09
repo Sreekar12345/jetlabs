@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import { Bell, Menu, Moon, PanelLeft, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSearchPlaceholder } from "@/lib/navigation";
 import { useUIStore } from "@/store/ui-store";
+import { useNotificationStore } from "@/store/notification-store";
 import type { AppShellUser } from "@/types/aoip";
 
 type NavbarProps = {
@@ -22,6 +24,25 @@ export function Navbar({ user }: NavbarProps) {
     user.role === "STUDENT"
       ? "Search problems, teams, papers..."
       : getSearchPlaceholder(user.role, pathname);
+
+  const { unreadCount, setIsOpen, setUnreadCount } = useNotificationStore();
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await fetch("/api/notifications?filter=unread");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setUnreadCount(data.data.unreadCount);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching unread count:", err);
+      }
+    };
+    fetchCount();
+  }, [setUnreadCount]);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-white">
@@ -70,10 +91,16 @@ export function Navbar({ user }: NavbarProps) {
           type="button"
           variant="ghost"
           size="icon"
-          className="size-10 rounded-full text-muted-foreground hover:text-foreground"
+          className="relative size-10 rounded-full text-muted-foreground hover:text-foreground"
           aria-label="Notifications"
+          onClick={() => setIsOpen(true)}
         >
           <Bell className="size-4" />
+          {unreadCount > 0 && (
+            <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-bold text-white ring-2 ring-white">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </Button>
       </div>
     </header>

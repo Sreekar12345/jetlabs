@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { createStudentSubmissionAction } from "@/lib/actions/review-actions";
 import { toast } from "sonner";
+import { FileManager } from "@/components/dashboard/file-manager";
 
 type Submission = {
   id: string;
@@ -356,8 +357,7 @@ export function WeeklySubmissionsClient({
   const [githubLink, setGithubLink] = useState("");
   const [deploymentLink, setDeploymentLink] = useState("");
 
-  const [newFileName, setNewFileName] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [uploadedFileIds, setUploadedFileIds] = useState<string[]>([]);
 
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -386,7 +386,7 @@ export function WeeklySubmissionsClient({
   const hasImplementation = implementation.trim().length > 5;
   const hasNextGoals = nextGoals.trim().length > 5;
   const hasGithub = githubLink.trim().startsWith("http");
-  const hasFiles = uploadedFiles.length > 0;
+  const hasFiles = uploadedFileIds.length > 0;
 
   let readiness = 20;
   if (hasObjectives) readiness += 20;
@@ -394,17 +394,6 @@ export function WeeklySubmissionsClient({
   if (hasNextGoals) readiness += 15;
   if (hasGithub) readiness += 10;
   if (hasFiles) readiness += 10;
-
-  const handleAddFile = () => {
-    if (newFileName.trim()) {
-      setUploadedFiles((prev) => [...prev, newFileName.trim()]);
-      setNewFileName("");
-    }
-  };
-
-  const handleRemoveFile = (indexToRemove: number) => {
-    setUploadedFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -439,7 +428,7 @@ ${nextGoals}
 - **Deployment Link**: ${deploymentLink || "Not provided"}
 
 ### Attached Evidence Artifacts
-${uploadedFiles.map((file) => `- ${file}`).join("\n") || "No files attached."}`;
+Centralized file uploads attached to this submission.`;
 
       const formattedTitle = `Week ${weekNumber}: ${title}`;
 
@@ -447,6 +436,7 @@ ${uploadedFiles.map((file) => `- ${file}`).join("\n") || "No files attached."}`;
         type: "WEEKLY",
         title: formattedTitle,
         content: contentMarkdown,
+        fileIds: uploadedFileIds,
       });
 
       if (!res.success) {
@@ -458,7 +448,7 @@ ${uploadedFiles.map((file) => `- ${file}`).join("\n") || "No files attached."}`;
         setImplementation("");
         setBlockers("");
         setNextGoals("");
-        setUploadedFiles([]);
+        setUploadedFileIds([]);
         setWeekNumber((initialSubmissions.length + 2).toString());
         router.refresh();
       }
@@ -647,49 +637,12 @@ ${uploadedFiles.map((file) => `- ${file}`).join("\n") || "No files attached."}`;
                   <div className="border-t border-border pt-7">
                     <FieldGroup
                       label="Evidence Files & Logs"
-                      helper="Add names of logs, screenshots, models, or report drafts included in this batch."
+                      helper="Upload your reports, code snapshots, images, or presentations for this weekly milestone."
                     >
-                      <div className="flex gap-2 mb-4">
-                        <Input
-                          className="rounded-xl bg-muted/30 text-sm"
-                          placeholder="e.g. confusion-matrix.png, evaluation-results.csv"
-                          value={newFileName}
-                          onChange={(e) => setNewFileName(e.target.value)}
-                          disabled={isPending}
-                        />
-                        <Button
-                          type="button"
-                          onClick={handleAddFile}
-                          disabled={isPending || !newFileName.trim()}
-                          className="rounded-xl"
-                        >
-                          <Plus className="size-4 mr-1" /> Add
-                        </Button>
-                      </div>
-
-                      {uploadedFiles.length > 0 && (
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {uploadedFiles.map((file, idx) => (
-                            <div
-                              key={`${file}-${idx}`}
-                              className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3"
-                            >
-                              <Paperclip className="size-4 shrink-0 text-muted-foreground" />
-                              <span className="truncate text-xs font-medium text-foreground flex-1">
-                                {file}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveFile(idx)}
-                                className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                                disabled={isPending}
-                              >
-                                <X className="size-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <FileManager
+                        teamId={team.id}
+                        onFilesChange={setUploadedFileIds}
+                      />
                     </FieldGroup>
                   </div>
 

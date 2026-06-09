@@ -5,6 +5,7 @@ import { useUIStore } from "@/store/ui-store";
 import type { AppShellUser } from "@/types/aoip";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { NotificationCenter } from "@/components/dashboard/notification-center";
 
 type AppShellProps = {
   user: AppShellUser;
@@ -17,6 +18,7 @@ export function AppShell({ user, children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-white text-foreground">
       <Sidebar user={user} />
+      <NotificationCenter />
 
       <div
         className={cn(
