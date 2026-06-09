@@ -211,6 +211,7 @@ export type ProblemMarketData = {
   }>;
   problems: ProblemListing[];
   hasProject?: boolean;
+  isTeamLead?: boolean;
 };
 
 export type ReviewQueueItem = {

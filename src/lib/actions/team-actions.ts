@@ -92,6 +92,7 @@ export async function createTeamAction(input: unknown) {
 
       // 2b. Look up existing students and add memberships (throw error if not found)
       if (studentNames && studentNames.length > 0) {
+        let memberCount = 0;
         for (const rawName of studentNames) {
           const trimmedName = rawName.trim();
           if (!trimmedName) continue;
@@ -112,25 +113,19 @@ export async function createTeamAction(input: unknown) {
             throw new Error(`Student "${trimmedName}" not found.`);
           }
 
+          const isLead = memberCount === 0;
+
           // Create membership
           await tx.teamMember.create({
             data: {
               teamId: team.id,
               userId: studentUser.id,
-              roleLabel: "Member",
+              roleLabel: isLead ? "Lead" : "Member",
+              role: isLead ? "TEAM_LEAD" : "MEMBER",
             },
           });
 
-          // Synchronize direct User record fields to maintain architecture alignment and prevent data drift
-          await tx.user.update({
-            where: { id: studentUser.id },
-            data: {
-              teamId: team.id,
-              facultyId: facultyId,
-              mentorId: facultyId, // Assigned faculty acts as default mentor
-              joinedTeamAt: new Date(),
-            },
-          });
+          memberCount++;
         }
       }
 

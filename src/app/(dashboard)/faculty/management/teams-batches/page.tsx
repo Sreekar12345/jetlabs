@@ -18,6 +18,11 @@ export default async function FacultyTeamsBatchesPage() {
 
   const initialTeams = dbTeams.map((team) => {
     const memberCount = team.students.length;
+    const sortedStudents = [...team.students].sort((a, b) => {
+      if (a.role === "TEAM_LEAD" && b.role !== "TEAM_LEAD") return -1;
+      if (a.role !== "TEAM_LEAD" && b.role === "TEAM_LEAD") return 1;
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
     const submissionCount = team.submissions.length;
     const projectProgress = team.project?.progress ?? 0;
     const completedMilestones = team.project?.milestones?.filter(m => m.status === "COMPLETED").length ?? 0;
@@ -65,10 +70,12 @@ export default async function FacultyTeamsBatchesPage() {
         ...(pendingReviews > 0 ? [`${pendingReviews} pending reviews`] : []),
         ...(projectProgress >= 70 ? ["Good progress"] : []),
       ],
-      contribution: team.students.map((s) => ({
+      contribution: sortedStudents.map((s) => ({
         member: s.user.name?.split(" ")[0] ?? "Member",
         value: memberCount > 0 ? Math.round(100 / memberCount) : 0,
-        status: "Active" as string,
+        status: s.role === "TEAM_LEAD" ? "Team Lead" : "Member",
+        role: s.role,
+        roleLabel: s.roleLabel,
       })),
       heatmap: Array.from({ length: 12 }, () => Math.min(10, Math.max(0, Math.round(projectProgress / 10)))),
       timeline: [

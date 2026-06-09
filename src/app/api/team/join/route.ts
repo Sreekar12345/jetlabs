@@ -71,6 +71,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Check if the student has a pre-assigned team membership in any team
+    const preAssignedMembership = await db.teamMember.findFirst({
+      where: { userId },
+    });
+
+    if (preAssignedMembership && preAssignedMembership.teamId !== team.id) {
+      return apiError({
+        code: "BAD_REQUEST",
+        message: "You have been assigned to a different team by your faculty. Please use the correct team code.",
+        status: 400,
+      });
+    }
+
     // 3. Check if team is active
     if (team.status !== "ACTIVE") {
       return apiError({
@@ -111,6 +124,7 @@ export async function POST(request: NextRequest) {
             teamId: team.id,
             userId,
             roleLabel: "Member",
+            role: "MEMBER",
             contributionScore: 0,
             lastActiveAt: new Date(),
           },

@@ -98,6 +98,7 @@ function ProblemDetailDrawer({
   problem,
   isPending,
   hasProject,
+  isTeamLead,
   onClose,
   onToggleBookmark,
   onSelectProject,
@@ -105,6 +106,7 @@ function ProblemDetailDrawer({
   problem: ProblemListing | null;
   isPending: boolean;
   hasProject: boolean;
+  isTeamLead: boolean;
   onClose: () => void;
   onToggleBookmark: (problemId: string) => void;
   onSelectProject: (problemId: string) => void;
@@ -263,7 +265,15 @@ function ProblemDetailDrawer({
 
         <div className="border-t border-border bg-white px-6 py-5">
           <div className="flex flex-col gap-3">
-            {!hasProject ? (
+            {!isTeamLead ? (
+              <Button
+                type="button"
+                className="h-11 w-full bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed flex items-center justify-center gap-2"
+                disabled
+              >
+                Only the Team Lead can select a Problem Statement.
+              </Button>
+            ) : !hasProject ? (
               <Button
                 type="button"
                 className="h-11 w-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center gap-2"
@@ -274,9 +284,15 @@ function ProblemDetailDrawer({
                 Assign as Capstone Project
               </Button>
             ) : (
-              <div className="text-xs text-muted-foreground bg-muted/45 rounded-xl p-3 text-center border border-border font-medium">
-                You are currently enrolled in an active Capstone project.
-              </div>
+              <Button
+                type="button"
+                className="h-11 w-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center gap-2"
+                disabled={isPending}
+                onClick={() => onSelectProject(problem.id)}
+              >
+                <Rocket className="size-4" />
+                Update Capstone Project
+              </Button>
             )}
             <div className="flex gap-3">
               <Button
@@ -315,6 +331,7 @@ function ProblemDetailDrawer({
 
 export function ProblemMarketBoard({ initialData }: ProblemMarketBoardProps) {
   const router = useRouter();
+  const isTeamLead = initialData.isTeamLead ?? false;
   const [activeTab, setActiveTab] = useState<ActiveTab>("all");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -648,6 +665,7 @@ export function ProblemMarketBoard({ initialData }: ProblemMarketBoardProps) {
         problem={selectedProblem}
         isPending={isBookmarkPending || isSelectPending}
         hasProject={hasProject}
+        isTeamLead={isTeamLead}
         onClose={() => setSelectedProblemId(null)}
         onToggleBookmark={handleToggleBookmark}
         onSelectProject={handleSelectProject}

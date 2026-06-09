@@ -48,9 +48,9 @@ type OnboardingTeamClientProps = {
 export function OnboardingTeamClient({ userName, pendingRequest: initialPendingRequest }: OnboardingTeamClientProps) {
   const router = useRouter();
   
-  // Set initial tab to "pending" if there's a pending request, otherwise default to "join"
-  const [activeTab, setActiveTab] = useState<"join" | "request" | "pending">(
-    initialPendingRequest ? "pending" : "join"
+  // Set initial tab to "request" if there's a pending request, otherwise default to "join"
+  const [activeTab, setActiveTab] = useState<"join" | "request">(
+    initialPendingRequest ? "request" : "join"
   );
   
   const [loading, setLoading] = useState(false);
@@ -201,7 +201,7 @@ export function OnboardingTeamClient({ userName, pendingRequest: initialPendingR
 
       setTimeout(() => {
         setSuccessMode(null);
-        setActiveTab("pending");
+        setActiveTab("request");
         setLoading(false);
         router.refresh(); // Refresh route data in background
       }, 2000);
@@ -290,41 +290,39 @@ export function OnboardingTeamClient({ userName, pendingRequest: initialPendingR
                     </CardDescription>
                   </div>
 
-                  {/* Tabs toggle when not in pending mode */}
-                  {activeTab !== "pending" && (
-                    <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100/80 dark:bg-zinc-800/80 rounded-xl mt-4 border border-border/50">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setError(null);
-                          setActiveTab("join");
-                        }}
-                        className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 ${
-                          activeTab === "join"
-                            ? "bg-white dark:bg-zinc-700 text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground hover:bg-slate-200/50 dark:hover:bg-zinc-700/30"
-                        }`}
-                      >
-                        <Key className="size-3.5" />
-                        Join via Code
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setError(null);
-                          setActiveTab("request");
-                        }}
-                        className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 ${
-                          activeTab === "request"
-                            ? "bg-white dark:bg-zinc-700 text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground hover:bg-slate-200/50 dark:hover:bg-zinc-700/30"
-                        }`}
-                      >
-                        <Send className="size-3.5" />
-                        Request Assignment
-                      </button>
-                    </div>
-                  )}
+                  {/* Tabs toggle */}
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100/80 dark:bg-zinc-800/80 rounded-xl mt-4 border border-border/50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError(null);
+                        setActiveTab("join");
+                      }}
+                      className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                        activeTab === "join"
+                          ? "bg-white dark:bg-zinc-700 text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground hover:bg-slate-200/50 dark:hover:bg-zinc-700/30"
+                      }`}
+                    >
+                      <Key className="size-3.5" />
+                      Join via Code
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError(null);
+                        setActiveTab("request");
+                      }}
+                      className={`flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                        activeTab === "request"
+                          ? "bg-white dark:bg-zinc-700 text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground hover:bg-slate-200/50 dark:hover:bg-zinc-700/30"
+                      }`}
+                    >
+                      <Send className="size-3.5" />
+                      Request Assignment
+                    </button>
+                  </div>
                 </CardHeader>
 
                 <CardContent className="p-6 sm:p-8">
@@ -427,7 +425,7 @@ export function OnboardingTeamClient({ userName, pendingRequest: initialPendingR
                   )}
 
                   {/* VIEW 2: REQUEST ASSIGNMENT FORM */}
-                  {activeTab === "request" && (
+                  {activeTab === "request" && !localPendingRequest && (
                     <form onSubmit={handleRequestSubmit} className="space-y-5">
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
@@ -558,7 +556,7 @@ export function OnboardingTeamClient({ userName, pendingRequest: initialPendingR
                   )}
 
                   {/* VIEW 3: PENDING APPROVAL VIEW */}
-                  {activeTab === "pending" && localPendingRequest && (
+                  {activeTab === "request" && localPendingRequest && (
                     <div className="space-y-6">
                       
                       {/* Big Warning/Pending alert card */}
@@ -645,7 +643,7 @@ export function OnboardingTeamClient({ userName, pendingRequest: initialPendingR
                 </CardContent>
 
                 {/* Switch tab footer for Request screen */}
-                {activeTab === "request" && (
+                {activeTab === "request" && !localPendingRequest && (
                   <CardFooter className="bg-slate-50/50 dark:bg-zinc-800/20 border-t border-border/60 p-4 px-6 flex justify-between items-center text-xs">
                     <span className="text-muted-foreground">Already have a Team Code?</span>
                     <button

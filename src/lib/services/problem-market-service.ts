@@ -92,13 +92,16 @@ function deriveFitScore(problem: ProblemRecord, viewerProject: Awaited<ReturnTyp
 export async function getProblemMarketData(
   viewer: ViewerContext,
 ): Promise<ProblemMarketData> {
-  const [viewerProject, problems] = await Promise.all([
+  const [viewerProject, problems, membership] = await Promise.all([
     getViewerProjectContext(viewer),
     db.problem.findMany({
       where: getProblemScopeWhere(),
       orderBy: [{ trendingScore: "desc" }, { createdAt: "desc" }],
       relationLoadStrategy: "join",
       include: problemInclude,
+    }),
+    db.teamMember.findFirst({
+      where: { userId: viewer.userId },
     }),
   ]);
 
@@ -180,6 +183,7 @@ export async function getProblemMarketData(
     })),
     problems: mappedProblems,
     hasProject: viewerProject !== null,
+    isTeamLead: membership ? membership.role === "TEAM_LEAD" : true,
   };
 }
 

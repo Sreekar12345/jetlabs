@@ -72,7 +72,7 @@ type TeamSignal = {
   prediction: string;
   recommendation: string;
   signals: string[];
-  contribution: Array<{ member: string; value: number; status: string }>;
+  contribution: Array<{ member: string; value: number; status: string; role?: string; roleLabel?: string }>;
   heatmap: number[];
   timeline: Array<{ label: string; type: "submission" | "review" | "ieee" | "viva" | "risk" | "recovery"; week: string }>;
 };
@@ -740,10 +740,28 @@ export function FacultyTeamExecutionView({ module, initialTeams }: FacultyTeamEx
                 <h3 className="text-sm font-bold text-slate-850 tracking-wide uppercase font-semibold">Team Contribution Breakdown</h3>
                 <div className="grid gap-3 md:grid-cols-2">
                   {activeTeam.contribution.map((member) => (
-                    <div key={member.member} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-3">
+                    <div
+                      key={member.member}
+                      className={cn(
+                        "rounded-xl border p-4 space-y-3",
+                        member.status === "Team Lead"
+                          ? "border-indigo-200 bg-indigo-50/20 shadow-sm"
+                          : "border-slate-100 bg-slate-50/50"
+                      )}
+                    >
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-bold text-slate-800">{member.member}</span>
-                        <Badge variant="outline" className="bg-white text-slate-600 font-semibold text-[10px] px-2 py-0.5">{member.status}</Badge>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "font-semibold text-[10px] px-2 py-0.5",
+                            member.status === "Team Lead"
+                              ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                              : "bg-white border-slate-200 text-slate-600"
+                          )}
+                        >
+                          {member.status}
+                        </Badge>
                       </div>
                       <Meter value={member.value} tone={member.value < 20 ? "critical" : member.value > 45 ? "attention" : "healthy"} className="h-2" />
                       <p className="text-[10px] text-slate-400 font-semibold">Contribution: {member.value}%</p>

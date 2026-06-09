@@ -71,13 +71,7 @@ export async function selectProblemAsProjectAction(input: unknown) {
     const existingMembership = await db.teamMember.findFirst({
       where: { userId },
     });
-    if (existingMembership) {
-      return {
-        success: false,
-        message: "You are already assigned to a project team.",
-      };
-    }
-
+    
     // 2. Fetch problem details
     const problem = await db.problem.findUnique({
       where: { id: problemId },
@@ -86,6 +80,54 @@ export async function selectProblemAsProjectAction(input: unknown) {
       return {
         success: false,
         message: "Problem brief not found.",
+      };
+    }
+
+    if (existingMembership) {
+      if (existingMembership.role !== "TEAM_LEAD") {
+        return {
+          success: false,
+          message: "Only the Team Lead can select a Problem Statement.",
+          status: 403,
+        };
+      }
+
+      // Fetch team details
+      const team = await db.team.findUnique({
+        where: { id: existingMembership.teamId },
+      });
+
+      if (!team) {
+        return {
+          success: false,
+          message: "Associated team not found.",
+        };
+      }
+
+      // Update existing team project
+      await db.$transaction(async (tx: any) => {
+        await tx.project.update({
+          where: { id: team.projectId },
+          data: {
+            title: problem.title,
+            description: problem.summary,
+            domain: problem.domain,
+            difficulty: problem.difficulty,
+            problemId: problem.id,
+          },
+        });
+
+        await tx.team.update({
+          where: { id: team.id },
+          data: {
+            projectTitle: problem.title,
+          },
+        });
+      });
+
+      return {
+        success: true,
+        message: `Successfully updated your team's project to "${problem.title}".`,
       };
     }
 
@@ -154,6 +196,7 @@ export async function selectProblemAsProjectAction(input: unknown) {
           teamId: team.id,
           userId,
           roleLabel: "Lead",
+          role: "TEAM_LEAD",
           contributionScore: 100,
           lastActiveAt: new Date(),
         },

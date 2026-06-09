@@ -13,6 +13,11 @@ enum Role {
   ADMIN
 }
 
+enum TeamMemberRole {
+  TEAM_LEAD
+  MEMBER
+}
+
 enum VerificationStatus {
   PENDING
   VERIFIED
@@ -145,7 +150,8 @@ model TeamMember {
   id                String    @id @default(cuid())
   teamId            String
   userId            String
-  roleLabel         String    @default("Member")
+  roleLabel         String          @default("Member")
+  role              TeamMemberRole  @default(MEMBER)
   contributionScore Int       @default(0)
   lastActiveAt      DateTime?
   createdAt         DateTime  @default(now())
