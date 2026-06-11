@@ -1,5 +1,2 @@
-import { BacklogAnalyticsBoard } from "@/components/dashboard/backlog-analytics-board";
-
-export default function BacklogAnalyticsPage() {
-  return <BacklogAnalyticsBoard />;
-}
+import Page from "../../backlogs/page";
+export default Page;

@@ -19,7 +19,9 @@ function normalizeEmail(value: string) {
 }
 
 function normalizeLoginRole(value: unknown): LoginRole {
-  return value === "FACULTY" ? "FACULTY" : "STUDENT";
+  if (value === "ADMIN") return "ADMIN";
+  if (value === "FACULTY") return "FACULTY";
+  return "STUDENT";
 }
 
 export const loginSchema = z

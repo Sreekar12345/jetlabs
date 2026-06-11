@@ -9,7 +9,8 @@ import {
   getAdminSubmissions,
   getAdminEvaluations,
   getAdminNotifications,
-  getAdminSystemHealth
+  getAdminSystemHealth,
+  getAdminApplications
 } from "@/lib/services/admin-service";
 import { getAuditLogs } from "@/lib/services/audit-service";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,8 @@ export default async function AdminDashboardPage() {
     evaluations,
     notifications,
     health,
-    auditLogs
+    auditLogs,
+    applications
   ] = await Promise.all([
     getAdminOverviewStats(),
     getAdminStudents(),
@@ -39,8 +41,17 @@ export default async function AdminDashboardPage() {
     getAdminEvaluations(),
     getAdminNotifications(),
     getAdminSystemHealth(),
-    getAuditLogs()
+    getAuditLogs(),
+    getAdminApplications()
   ]);
+
+  // Convert Date objects to strings to prevent serialisation issues in React Client Components
+  const serializedStudents = JSON.parse(JSON.stringify(students));
+  const serializedSubmissions = JSON.parse(JSON.stringify(submissions));
+  const serializedEvaluations = JSON.parse(JSON.stringify(evaluations));
+  const serializedNotifications = JSON.parse(JSON.stringify(notifications));
+  const serializedAuditLogs = JSON.parse(JSON.stringify(auditLogs));
+  const serializedApplications = JSON.parse(JSON.stringify(applications));
 
   return (
     <div className="space-y-6">
@@ -61,15 +72,16 @@ export default async function AdminDashboardPage() {
 
       <AdminControlCenter
         stats={stats}
-        students={students}
+        students={serializedStudents}
         faculty={faculty}
         teams={teams}
         projects={projects}
-        submissions={submissions}
-        evaluations={evaluations}
-        notifications={notifications}
+        submissions={serializedSubmissions}
+        evaluations={serializedEvaluations}
+        notifications={serializedNotifications}
         health={health}
-        auditLogs={auditLogs}
+        auditLogs={serializedAuditLogs}
+        applications={serializedApplications}
       />
     </div>
   );

@@ -174,6 +174,30 @@ export async function getAdminStudents(): Promise<AdminStudentData[]> {
   });
 }
 
+export interface AdminUserData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export async function getAdminUsers(): Promise<AdminUserData[]> {
+  const users = await db.user.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  return users.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    isActive: u.isActive !== false,
+    createdAt: u.createdAt,
+  }));
+}
+
 /**
  * Fetch faculty list for management
  */
@@ -380,4 +404,41 @@ export async function getAdminSystemHealth(): Promise<SystemHealthData> {
     dbStatus: "Healthy",
     dbLatencyMs: 4, // Neon average latency
   };
+}
+
+export interface AdminApplicationData {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  collegeName: string;
+  department: string;
+  section: string;
+  facultyName: string;
+  notes: string | null;
+  status: string;
+  createdAt: Date;
+}
+
+export async function getAdminApplications(): Promise<AdminApplicationData[]> {
+  const requests = await db.teamAssignmentRequest.findMany({
+    include: {
+      student: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return requests.map((r) => ({
+    id: r.id,
+    studentId: r.studentId,
+    studentName: r.student.name,
+    studentEmail: r.student.email,
+    collegeName: r.collegeName,
+    department: r.department,
+    section: r.section,
+    facultyName: r.facultyName,
+    notes: r.notes,
+    status: r.status,
+    createdAt: r.createdAt,
+  }));
 }

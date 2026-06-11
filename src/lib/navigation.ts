@@ -24,6 +24,8 @@ import {
   ScrollText,
   Sparkles,
   Users2,
+  Settings,
+  FolderCheck,
 } from "lucide-react";
 import { getDefaultDashboardPath } from "@/lib/auth/routing";
 
@@ -228,14 +230,106 @@ export const NAVIGATION_BY_ROLE: Record<UserRole, NavigationSection[]> = {
   FACULTY: FACULTY_NAVIGATION,
   ADMIN: [
     {
-      label: "Overview",
+      label: "System Overview",
       items: [
         {
           title: "Dashboard",
           href: "/admin",
-          icon: Microscope,
+          icon: LayoutDashboard,
           description: "Administrator control center.",
           section: "Overview",
+        },
+        {
+          title: "Analytics",
+          href: "/admin/analytics",
+          icon: BarChart3,
+          description: "System activity, traffic, and growth metrics.",
+          section: "Overview",
+        },
+        {
+          title: "Audit Logs",
+          href: "/admin/audits",
+          icon: Activity,
+          description: "Immutable platform operations audit trail.",
+          section: "Overview",
+        },
+      ],
+    },
+    {
+      label: "User Management",
+      items: [
+        {
+          title: "User Management",
+          href: "/admin/users",
+          icon: Users2,
+          description: "General directory of student and faculty users.",
+          section: "Users",
+        },
+        {
+          title: "Student Management",
+          href: "/admin/students",
+          icon: GraduationCap,
+          description: "Directory and verification of student records.",
+          section: "Users",
+        },
+        {
+          title: "Faculty Management",
+          href: "/admin/faculty",
+          icon: Presentation,
+          description: "Directory and team coverage of faculty advisors.",
+          section: "Users",
+        },
+      ],
+    },
+    {
+      label: "Platform Assets",
+      items: [
+        {
+          title: "Project Management",
+          href: "/admin/projects",
+          icon: FolderCheck,
+          description: "Oversight of research and engineering projects.",
+          section: "Platform Assets",
+        },
+        {
+          title: "Team Management",
+          href: "/admin/teams",
+          icon: Users2,
+          description: "Administration of student teams and assignments.",
+          section: "Platform Assets",
+        },
+        {
+          title: "Application Management",
+          href: "/admin/applications",
+          icon: FileSearch,
+          description: "Review and triage student onboarding applications.",
+          section: "Platform Assets",
+        },
+      ],
+    },
+    {
+      label: "Execution & Reviews",
+      items: [
+        {
+          title: "Submissions",
+          href: "/admin/submissions",
+          icon: FileCheck2,
+          description: "Track and download sprint artifacts and research logs.",
+          section: "Execution & Reviews",
+        },
+        {
+          title: "Evaluations",
+          href: "/admin/evaluations",
+          icon: BadgeCheck,
+          description: "Auditing grades and reviews entered by faculty.",
+          section: "Execution & Reviews",
+        },
+        {
+          title: "Settings",
+          href: "/admin/settings",
+          icon: Settings,
+          description: "Configure system-wide parameters, flags, and rules.",
+          section: "Execution & Reviews",
         },
       ],
     },

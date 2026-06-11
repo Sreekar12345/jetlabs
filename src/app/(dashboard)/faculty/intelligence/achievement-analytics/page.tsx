@@ -1,5 +1,2 @@
-import { AchievementAnalyticsBoard } from "@/components/dashboard/achievement-analytics-board";
-
-export default function AchievementAnalyticsPage() {
-  return <AchievementAnalyticsBoard />;
-}
+import Page from "../../achievements/page";
+export default Page;

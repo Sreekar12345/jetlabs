@@ -68,6 +68,75 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   
+  // Voting System State
+  const [myVote, setMyVote] = useState<string | null>(null);
+  const [votingStats, setVotingStats] = useState<any>(null);
+  const [isVotingPending, setIsVotingPending] = useState(false);
+
+  const projectId = data.currentMilestone?.projectId;
+
+  const fetchVotingData = async () => {
+    if (!projectId) return;
+    try {
+      const [myVoteRes, statsRes] = await Promise.all([
+        fetch(`/api/v1/projects/${projectId}/my-vote`),
+        fetch(`/api/v1/projects/${projectId}/votes`),
+      ]);
+
+      if (myVoteRes.ok) {
+        const myVoteJson = await myVoteRes.json();
+        if (myVoteJson.success) {
+          setMyVote(myVoteJson.data?.vote || null);
+        }
+      }
+
+      if (statsRes.ok) {
+        const statsJson = await statsRes.json();
+        if (statsJson.success) {
+          setVotingStats(statsJson.data || statsJson);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching project approval voting data:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (projectId) {
+      fetchVotingData();
+    }
+  }, [projectId]);
+
+  const handleVote = async (voteValue: "approved" | "rejected") => {
+    if (!projectId) return;
+    setIsVotingPending(true);
+    try {
+      const res = await fetch(`/api/v1/projects/${projectId}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vote: voteValue }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          toast.success("Vote recorded successfully.");
+          await fetchVotingData();
+        } else {
+          toast.error(json.message || "Failed to record vote.");
+        }
+      } else {
+        const errorJson = await res.json();
+        toast.error(errorJson.error?.message || "Failed to submit vote.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred during voting.");
+    } finally {
+      setIsVotingPending(false);
+    }
+  };
+  
   // Submission Form State
   const [submissionUrl, setSubmissionUrl] = useState("");
   const [submissionNotes, setSubmissionNotes] = useState("");
@@ -446,6 +515,125 @@ export function StudentDashboardView({ data }: StudentDashboardViewProps) {
                   <div className="rounded-2xl border border-amber-100 bg-amber-50/30 p-4 mt-3">
                     <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Faculty Advisor Instructions</p>
                     <p className="text-xs text-slate-600 mt-1 leading-relaxed">{data.selectedProblemStatement.facultyGuide}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {data.selectedProblemStatement && votingStats && (
+            <Card id="ry3ks9" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm text-slate-900">
+              <CardHeader className="p-0 pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BadgeCheck className="size-5 text-indigo-500" />
+                  <CardTitle className="text-xs font-extrabold uppercase tracking-wider text-indigo-850">Team Approval Status</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0 pt-4 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <h3 id="9naw6m" className="text-base font-bold text-slate-800">
+                      Team Consensus: {votingStats.approvalPercentage}%
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Approved: {votingStats.approved} · Not Approved: {votingStats.rejected} · Pending: {votingStats.pending}
+                    </p>
+                  </div>
+                  <div id="pb6b6h" className="font-mono text-xs text-indigo-650 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-1.5 font-bold">
+                    {"█".repeat(Math.round(votingStats.approvalPercentage / 10)) + "░".repeat(10 - Math.round(votingStats.approvalPercentage / 10))} {votingStats.approvalPercentage}%
+                  </div>
+                </div>
+
+                {/* Voter Action Block */}
+                {data.teamMembers?.find(m => m.id === data.welcome.userId)?.role === "MEMBER" ? (
+                  <div className="pt-4 border-t border-slate-100 space-y-3">
+                    {myVote ? (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="text-xs text-slate-600">
+                          Your Response:{" "}
+                          <span id={myVote === "approved" ? "agj7sj" : "0bfbkr"} className={cn(
+                            "font-bold uppercase px-2 py-0.5 rounded text-[10px] border",
+                            myVote === "approved"
+                              ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+                              : "bg-rose-50 border-rose-100 text-rose-700"
+                          )}>
+                            {myVote === "approved" ? "Approved" : "Not Approved"}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            id="7rqj0y"
+                            onClick={() => handleVote("approved")}
+                            disabled={isVotingPending || myVote === "approved"}
+                            variant="outline"
+                            className="h-8 px-3 rounded-xl border-emerald-250 text-emerald-700 hover:bg-emerald-50/50 text-[10px] font-bold shadow-none"
+                          >
+                            ✓ Change to Approve
+                          </Button>
+                          <Button
+                            id="w16zgk"
+                            onClick={() => handleVote("rejected")}
+                            disabled={isVotingPending || myVote === "rejected"}
+                            variant="outline"
+                            className="h-8 px-3 rounded-xl border-rose-250 text-rose-700 hover:bg-rose-50/50 text-[10px] font-bold shadow-none"
+                          >
+                            ✕ Change to Not Approve
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="text-xs text-slate-550">
+                          Please express whether you approve or reject this selected Problem Statement:
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            id="7rqj0y"
+                            onClick={() => handleVote("approved")}
+                            disabled={isVotingPending}
+                            className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm"
+                          >
+                            ✓ Approve
+                          </Button>
+                          <Button
+                            id="w16zgk"
+                            onClick={() => handleVote("rejected")}
+                            disabled={isVotingPending}
+                            className="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm"
+                          >
+                            ✕ Not Approve
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="pt-4 border-t border-slate-100 text-xs text-slate-400 italic">
+                    {data.teamMembers?.find(m => m.id === data.welcome.userId)?.role === "TEAM_LEAD"
+                      ? "You are the Team Leader. You cannot vote as you selected this project brief."
+                      : "Read-only access. You are not a voting student member of this team."}
+                  </div>
+                )}
+
+                {/* Team Leader/Admin/Faculty Detailed Responses Block */}
+                {votingStats.responses && votingStats.responses.length > 0 && (
+                  <div className="pt-4 border-t border-slate-100 space-y-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Member Responses Summary</p>
+                    <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
+                      {votingStats.responses.map((resp: any) => (
+                        <div key={resp.id} className="flex items-center justify-between border border-slate-100 rounded-xl p-2.5 bg-slate-50/30 text-xs">
+                          <span className="font-bold text-slate-700">{resp.memberName}</span>
+                          <span className={cn(
+                            "font-extrabold uppercase text-[9px] px-1.5 py-0.5 rounded border",
+                            resp.vote === "approved"
+                              ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+                              : "bg-rose-50 border-rose-100 text-rose-700"
+                          )}>
+                            {resp.vote === "approved" ? "Approved" : "Not Approved"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>

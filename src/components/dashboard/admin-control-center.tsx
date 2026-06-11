@@ -40,12 +40,23 @@ import {
   HeartPulse,
   Database,
   BarChart3,
-  Server
+  Server,
+  Settings
 } from "lucide-react";
 import {
   activateUserAction,
   deactivateUserAction,
-  resetStudentStatusAction
+  resetStudentStatusAction,
+  deleteUserAction,
+  resetPasswordAction,
+  changeUserRoleAction,
+  disbandTeamAction,
+  transferTeamOwnershipAction,
+  archiveProjectAction,
+  restoreProjectAction,
+  forceCloseProjectAction,
+  approveApplicationAction,
+  rejectApplicationAction
 } from "@/lib/actions/admin-actions";
 
 // Types
@@ -62,35 +73,43 @@ import {
 } from "@/lib/services/admin-service";
 import { AuditLogData } from "@/lib/services/audit-service";
 
+import { AdminApplicationData, AdminUserData } from "@/lib/services/admin-service";
+
 interface AdminControlCenterProps {
-  stats: AdminOverviewStats;
-  students: AdminStudentData[];
-  faculty: AdminFacultyData[];
-  teams: AdminTeamData[];
-  projects: AdminProjectData[];
-  submissions: AdminSubmissionData[];
-  evaluations: AdminEvaluationData[];
-  notifications: AdminNotificationData[];
-  health: SystemHealthData;
-  auditLogs: AuditLogData[];
+  stats?: AdminOverviewStats;
+  users?: AdminUserData[];
+  students?: AdminStudentData[];
+  faculty?: AdminFacultyData[];
+  teams?: AdminTeamData[];
+  projects?: AdminProjectData[];
+  submissions?: AdminSubmissionData[];
+  evaluations?: AdminEvaluationData[];
+  notifications?: AdminNotificationData[];
+  health?: SystemHealthData;
+  auditLogs?: AuditLogData[];
+  applications?: AdminApplicationData[];
+  initialTab?: "overview" | "users" | "students" | "faculty" | "projects" | "teams" | "applications" | "submissions" | "evaluations" | "notifications" | "audits" | "settings";
 }
 
 export function AdminControlCenter({
   stats,
-  students: initialStudents,
-  faculty: initialFaculty,
-  teams,
-  projects,
-  submissions,
-  evaluations,
-  notifications,
+  users = [],
+  students: initialStudents = [],
+  faculty: initialFaculty = [],
+  teams = [],
+  projects = [],
+  submissions = [],
+  evaluations = [],
+  notifications = [],
   health,
-  auditLogs
+  auditLogs = [],
+  applications = [],
+  initialTab = "overview"
 }: AdminControlCenterProps) {
   // State variables
   const [activeTab, setActiveTab] = useState<
-    "overview" | "users" | "teams-projects" | "submissions-evals" | "notifications" | "audits"
-  >("overview");
+    "overview" | "users" | "students" | "faculty" | "projects" | "teams" | "applications" | "submissions" | "evaluations" | "notifications" | "audits" | "settings"
+  >(initialTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -189,6 +208,21 @@ export function AdminControlCenter({
   const [selectedTeam, setSelectedTeam] = useState<AdminTeamData | null>(null);
   const [selectedSubmission, setSelectedSubmission] = useState<AdminSubmissionData | null>(null);
   const [selectedAuditLog, setSelectedAuditLog] = useState<AuditLogData | null>(null);
+  
+  // Custom Admin Action Modal States
+  const [selectedUserForRoleChange, setSelectedUserForRoleChange] = useState<{ id: string; name: string; role: string } | null>(null);
+  const [selectedUserForPasswordReset, setSelectedUserForPasswordReset] = useState<{ id: string; name: string } | null>(null);
+  const [newPasswordValue, setNewPasswordValue] = useState("");
+  const [newRoleValue, setNewRoleValue] = useState<"STUDENT" | "FACULTY" | "ADMIN">("STUDENT");
+  const [selectedApplication, setSelectedApplication] = useState<AdminApplicationData | null>(null);
+  const [assignTeamId, setAssignTeamId] = useState("");
+  
+  // Settings Local States
+  const [requireVerifyBeforeAccess, setRequireVerifyBeforeAccess] = useState(true);
+  const [emailSmtpHost, setEmailSmtpHost] = useState("smtp.jetlabs.app");
+  const [emailPort, setEmailPort] = useState("587");
+  const [logRetentionDays, setLogRetentionDays] = useState("90");
+  const [rateLimitRequests, setRateLimitRequests] = useState("60");
 
   const [isPending, startTransition] = useTransition();
 
@@ -277,6 +311,122 @@ export function AdminControlCenter({
       }
     });
   };
+  const handleDeleteUser = (userId: string) => {
+    startTransition(async () => {
+      const res = await deleteUserAction(userId);
+      if (res.success) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+      }
+    });
+  };
+
+  const handleResetPassword = (userId: string, passwordPlain: string) => {
+    startTransition(async () => {
+      const res = await resetPasswordAction(userId, passwordPlain);
+      if (res.success) {
+        toast.success(res.message);
+        setSelectedUserForPasswordReset(null);
+        setNewPasswordValue("");
+      } else {
+        toast.error(res.message);
+      }
+    });
+  };
+
+  const handleChangeUserRole = (userId: string, role: "STUDENT" | "FACULTY" | "ADMIN") => {
+    startTransition(async () => {
+      const res = await changeUserRoleAction(userId, role);
+      if (res.success) {
+        toast.success(res.message);
+        setSelectedUserForRoleChange(null);
+      } else {
+        toast.error(res.message);
+      }
+    });
+  };
+
+  const handleDisbandTeam = (teamId: string) => {
+    startTransition(async () => {
+      const res = await disbandTeamAction(teamId);
+      if (res.success) {
+        toast.success(res.message);
+        setSelectedTeam(null);
+      } else {
+        toast.error(res.message);
+      }
+    });
+  };
+
+  const handleTransferTeamOwnership = (teamId: string, newLeadUserId: string) => {
+    startTransition(async () => {
+      const res = await transferTeamOwnershipAction(teamId, newLeadUserId);
+      if (res.success) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+      }
+    });
+  };
+
+  const handleArchiveProject = (projectId: string) => {
+    startTransition(async () => {
+      const res = await archiveProjectAction(projectId);
+      if (res.success) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+      }
+    });
+  };
+
+  const handleRestoreProject = (projectId: string) => {
+    startTransition(async () => {
+      const res = await restoreProjectAction(projectId);
+      if (res.success) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+      }
+    });
+  };
+
+  const handleForceCloseProject = (projectId: string) => {
+    startTransition(async () => {
+      const res = await forceCloseProjectAction(projectId);
+      if (res.success) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+      }
+    });
+  };
+
+  const handleApproveApplication = (requestId: string, teamId: string) => {
+    startTransition(async () => {
+      const res = await approveApplicationAction(requestId, teamId);
+      if (res.success) {
+        toast.success(res.message);
+        setSelectedApplication(null);
+        setAssignTeamId("");
+      } else {
+        toast.error(res.message);
+      }
+    });
+  };
+
+  const handleRejectApplication = (requestId: string) => {
+    startTransition(async () => {
+      const res = await rejectApplicationAction(requestId);
+      if (res.success) {
+        toast.success(res.message);
+        setSelectedApplication(null);
+      } else {
+        toast.error(res.message);
+      }
+    });
+  };
 
   // Clear all filters
   const handleResetFilters = () => {
@@ -307,6 +457,24 @@ export function AdminControlCenter({
   };
 
   // Memoized client-filtered lists
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const matchesSearch =
+        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && u.isActive) ||
+        (statusFilter === "inactive" && !u.isActive);
+
+      const matchesRole =
+        roleFilter === "all" || u.role.toLowerCase() === roleFilter.toLowerCase();
+
+      return matchesSearch && matchesStatus && matchesRole;
+    });
+  }, [users, searchQuery, statusFilter, roleFilter]);
+
   const filteredStudents = useMemo(() => {
     return studentsList.filter((s) => {
       const matchesSearch =
@@ -447,6 +615,23 @@ export function AdminControlCenter({
     });
   }, [auditLogs, searchQuery, roleFilter, typeFilter, startDate, endDate]);
 
+  const filteredApplications = useMemo(() => {
+    return applications.filter((app) => {
+      const matchesSearch =
+        app.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.studentEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.collegeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.department.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" || app.status.toLowerCase() === statusFilter.toLowerCase();
+
+      const matchesDate = isWithinDateRange(app.createdAt);
+
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [applications, searchQuery, statusFilter, startDate, endDate]);
+
   // Derived detail states
   const selectedTeamMembers = useMemo(() => {
     if (!selectedTeam) return [];
@@ -465,18 +650,166 @@ export function AdminControlCenter({
       <div className="flex flex-col gap-4 border border-slate-100 bg-[#FAF9F5] p-5 rounded-2xl shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
           {/* General Search Input */}
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="absolute left-3 top-3 size-4 text-slate-400" />
-            <Input
-              type="text"
-              placeholder="Search students, faculty, teams, projects, logs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-10 border-slate-200 focus-visible:ring-black rounded-xl bg-white"
-            />
-          </div>
+          {activeTab !== "settings" && (
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute left-3 top-3 size-4 text-slate-400" />
+              <Input
+                type="text"
+                placeholder={
+                  activeTab === "users" ? "Search users by name, email..." :
+                  activeTab === "students" ? "Search students by name, roll number, email..." :
+                  activeTab === "faculty" ? "Search faculty by name, email..." :
+                  activeTab === "projects" ? "Search projects by title, domain..." :
+                  activeTab === "teams" ? "Search teams by name, code..." :
+                  activeTab === "applications" ? "Search applications by name, college..." :
+                  activeTab === "submissions" ? "Search submissions by title, team..." :
+                  activeTab === "evaluations" ? "Search evaluations by team, advisor..." :
+                  activeTab === "audits" ? "Search audits by actor, action..." :
+                  "Search..."
+                }
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-10 border-slate-200 focus-visible:ring-black rounded-xl bg-white"
+              />
+            </div>
+          )}
 
-          {/* Dynamic Action-specific filters depending on active tab */}
+          {/* Context-aware filters */}
+          {activeTab === "users" && (
+            <>
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
+              >
+                <option value="all">All Roles</option>
+                <option value="ADMIN">Admin</option>
+                <option value="FACULTY">Faculty</option>
+                <option value="STUDENT">Student</option>
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </>
+          )}
+
+          {activeTab === "students" && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="verified">Verified</option>
+              <option value="pending">Pending</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          )}
+
+          {activeTab === "faculty" && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          )}
+
+          {activeTab === "projects" && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
+            >
+              <option value="all">All Statuses</option>
+              <option value="DISCOVERY">Discovery</option>
+              <option value="RESEARCH">Research</option>
+              <option value="EXECUTION">Execution</option>
+              <option value="EVALUATION">Evaluation</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="ON_HOLD">On Hold</option>
+            </select>
+          )}
+
+          {activeTab === "teams" && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
+            >
+              <option value="all">All Statuses</option>
+              <option value="DISCOVERY">Discovery</option>
+              <option value="RESEARCH">Research</option>
+              <option value="EXECUTION">Execution</option>
+              <option value="EVALUATION">Evaluation</option>
+              <option value="COMPLETED">Completed</option>
+            </select>
+          )}
+
+          {activeTab === "applications" && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          )}
+
+          {activeTab === "submissions" && (
+            <>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
+              >
+                <option value="all">All Statuses</option>
+                <option value="PENDING_REVIEW">Pending Review</option>
+                <option value="UNDER_REVIEW">Under Review</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REVISION_REQUIRED">Revision Required</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
+              >
+                <option value="all">All Types</option>
+                <option value="WEEKLY">Weekly</option>
+                <option value="FINAL">Final</option>
+                <option value="IEEE">IEEE</option>
+                <option value="LITERATURE">Literature</option>
+              </select>
+            </>
+          )}
+
+          {activeTab === "evaluations" && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
+            >
+              <option value="all">All Statuses</option>
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+            </select>
+          )}
+
           {activeTab === "audits" && (
             <>
               <select
@@ -485,9 +818,9 @@ export function AdminControlCenter({
                 className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
               >
                 <option value="all">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="faculty">Faculty</option>
-                <option value="student">Student</option>
+                <option value="ADMIN">Admin</option>
+                <option value="FACULTY">Faculty</option>
+                <option value="STUDENT">Student</option>
               </select>
               <select
                 value={eventCategoryFilter}
@@ -516,92 +849,12 @@ export function AdminControlCenter({
                 <option value="ProjectFile">File</option>
                 <option value="Submission">Submission</option>
                 <option value="Evaluation">Evaluation</option>
-                <option value="Notification">Notification</option>
               </select>
             </>
           )}
 
-          {activeTab !== "overview" && activeTab !== "audits" && (
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
-            >
-              <option value="all">All Statuses</option>
-              {activeTab === "users" ? (
-                <>
-                  <option value="active">Active Account</option>
-                  <option value="inactive">Inactive Account</option>
-                  <option value="verified">Verified Student</option>
-                  <option value="pending">Pending Student</option>
-                  <option value="rejected">Rejected Student</option>
-                </>
-              ) : activeTab === "teams-projects" ? (
-                <>
-                  <option value="discovery">Discovery</option>
-                  <option value="ideation">Ideation</option>
-                  <option value="execution">Execution</option>
-                  <option value="viva">Viva Readiness</option>
-                  <option value="completed">Completed</option>
-                </>
-              ) : activeTab === "submissions-evals" ? (
-                <>
-                  <option value="pending_review">Pending Review</option>
-                  <option value="under_review">Under Review</option>
-                  <option value="approved">Approved</option>
-                  <option value="revision_required">Revision Required</option>
-                  <option value="rejected">Rejected</option>
-                </>
-              ) : activeTab === "notifications" ? (
-                <>
-                  <option value="read">Read</option>
-                  <option value="unread">Unread</option>
-                </>
-              ) : null}
-            </select>
-          )}
-
-          {(activeTab === "submissions-evals" || activeTab === "notifications" || activeTab === "audits") && (
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 border border-slate-200 rounded-xl px-3 bg-white text-sm focus:outline-none focus:ring-1 focus:ring-black"
-            >
-              <option value="all">All Types</option>
-              {activeTab === "submissions-evals" ? (
-                <>
-                  <option value="weekly">Weekly</option>
-                  <option value="final">Final</option>
-                  <option value="ieee">IEEE</option>
-                  <option value="literature">Literature</option>
-                </>
-              ) : activeTab === "notifications" ? (
-                <>
-                  <option value="alert">Alerts</option>
-                  <option value="submission">Submissions</option>
-                  <option value="review">Reviews</option>
-                  <option value="info">Info</option>
-                </>
-              ) : activeTab === "audits" ? (
-                <>
-                  <option value="user_activate">User Activate</option>
-                  <option value="user_deactivate">User Deactivate</option>
-                  <option value="user_status_reset">User Status Reset</option>
-                  <option value="login">Login</option>
-                  <option value="submission_create">Submission Create</option>
-                  <option value="evaluation_submit">Evaluation Submit</option>
-                  <option value="notification_create">Notification Create</option>
-                  <option value="unauthorized_access">Unauthorized Access</option>
-                </>
-              ) : null}
-            </select>
-          )}
-
           {/* Date range filters */}
-          {(activeTab === "users" ||
-            activeTab === "submissions-evals" ||
-            activeTab === "notifications" ||
-            activeTab === "audits") && (
+          {activeTab !== "settings" && activeTab !== "overview" && activeTab !== "faculty" && activeTab !== "projects" && activeTab !== "teams" && activeTab !== "evaluations" && (
             <div className="flex items-center gap-2">
               <Calendar className="size-4 text-slate-400" />
               <Input
@@ -620,101 +873,16 @@ export function AdminControlCenter({
             </div>
           )}
 
-          <Button
-            variant="ghost"
-            onClick={handleResetFilters}
-            className="h-10 text-slate-500 hover:text-black font-semibold"
-          >
-            <RotateCcw className="size-4 mr-1.5" /> Clear Filters
-          </Button>
+          {activeTab !== "settings" && (
+            <Button
+              variant="ghost"
+              onClick={handleResetFilters}
+              className="h-10 text-slate-500 hover:text-black font-semibold"
+            >
+              <RotateCcw className="size-4 mr-1.5" /> Clear Filters
+            </Button>
+          )}
         </div>
-      </div>
-
-      {/* Tabs list */}
-      <div className="flex border-b border-slate-100 overflow-x-auto gap-2">
-        <button
-          onClick={() => {
-            setActiveTab("overview");
-            handleResetFilters();
-          }}
-          className={`flex items-center gap-2 px-4 py-3 font-extrabold text-sm border-b-2 transition-all ${
-            activeTab === "overview"
-              ? "border-black text-black"
-              : "border-transparent text-slate-450 hover:text-slate-700"
-          }`}
-        >
-          <LayoutGrid className="size-4" /> Overview & System Health
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab("users");
-            handleResetFilters();
-          }}
-          className={`flex items-center gap-2 px-4 py-3 font-extrabold text-sm border-b-2 transition-all ${
-            activeTab === "users"
-              ? "border-black text-black"
-              : "border-transparent text-slate-450 hover:text-slate-700"
-          }`}
-        >
-          <Users className="size-4" /> User Directory
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab("teams-projects");
-            handleResetFilters();
-          }}
-          className={`flex items-center gap-2 px-4 py-3 font-extrabold text-sm border-b-2 transition-all ${
-            activeTab === "teams-projects"
-              ? "border-black text-black"
-              : "border-transparent text-slate-450 hover:text-slate-700"
-          }`}
-        >
-          <FolderCheck className="size-4" /> Teams & Projects
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab("submissions-evals");
-            handleResetFilters();
-          }}
-          className={`flex items-center gap-2 px-4 py-3 font-extrabold text-sm border-b-2 transition-all ${
-            activeTab === "submissions-evals"
-              ? "border-black text-black"
-              : "border-transparent text-slate-450 hover:text-slate-700"
-          }`}
-        >
-          <FileText className="size-4" /> Submissions & Reviews
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab("notifications");
-            handleResetFilters();
-          }}
-          className={`flex items-center gap-2 px-4 py-3 font-extrabold text-sm border-b-2 transition-all ${
-            activeTab === "notifications"
-              ? "border-black text-black"
-              : "border-transparent text-slate-450 hover:text-slate-700"
-          }`}
-        >
-          <Inbox className="size-4" /> Notifications Log
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab("audits");
-            handleResetFilters();
-          }}
-          className={`flex items-center gap-2 px-4 py-3 font-extrabold text-sm border-b-2 transition-all ${
-            activeTab === "audits"
-              ? "border-black text-black"
-              : "border-transparent text-slate-450 hover:text-slate-700"
-          }`}
-        >
-          <History className="size-4" /> System Auditing
-        </button>
       </div>
 
       {/* Tab Contents */}
@@ -729,35 +897,53 @@ export function AdminControlCenter({
         {activeTab === "overview" && (
           <div className="space-y-6">
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Students</div>
-                <div className="text-3xl font-black text-slate-900 mt-1">{stats.totalStudents}</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Users</div>
+                <div className="text-3xl font-black text-slate-900 mt-1">{(stats?.totalStudents || 0) + (stats?.totalFaculty || 0) + 1}</div>
+                <div className="text-[10px] text-indigo-600 mt-1 font-semibold">Registered logins</div>
+              </Card>
+
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Students</div>
+                <div className="text-3xl font-black text-slate-900 mt-1">{stats?.totalStudents || 0}</div>
                 <div className="text-[10px] text-emerald-600 mt-1 font-semibold">Active Profiles</div>
               </Card>
 
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Faculty</div>
-                <div className="text-3xl font-black text-slate-900 mt-1">{stats.totalFaculty}</div>
-                <div className="text-[10px] text-slate-400 mt-1 font-semibold">Academic Mentors</div>
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Faculty</div>
+                <div className="text-3xl font-black text-slate-900 mt-1">{stats?.totalFaculty || 0}</div>
+                <div className="text-[10px] text-slate-400 mt-1 font-semibold">Mentors</div>
               </Card>
 
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Teams</div>
-                <div className="text-3xl font-black text-indigo-600 mt-1">{stats.totalTeams}</div>
-                <div className="text-[10px] text-slate-400 mt-1 font-semibold">{stats.totalProjects} Projects total</div>
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Teams</div>
+                <div className="text-3xl font-black text-indigo-600 mt-1">{stats?.totalTeams || 0}</div>
+                <div className="text-[10px] text-slate-400 mt-1 font-semibold">Student Circles</div>
               </Card>
 
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Projects</div>
+                <div className="text-3xl font-black text-slate-900 mt-1">{stats?.activeProjects || 0}</div>
+                <div className="text-[10px] text-indigo-650 mt-1 font-semibold">In development</div>
+              </Card>
+
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Applications</div>
+                <div className="text-3xl font-black text-amber-600 mt-1">{applications.length}</div>
+                <div className="text-[10px] text-slate-400 mt-1 font-semibold">{applications.filter(a => a.status === "pending").length} Pending</div>
+              </Card>
+
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending Reviews</div>
-                <div className="text-3xl font-black text-rose-500 mt-1">{stats.pendingReviews}</div>
-                <div className="text-[10px] text-slate-450 mt-1 font-semibold">Awaiting Action</div>
+                <div className="text-3xl font-black text-rose-500 mt-1">{stats?.pendingReviews || 0}</div>
+                <div className="text-[10px] text-slate-450 mt-1 font-semibold">Awaiting action</div>
               </Card>
 
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Deliveries</div>
-                <div className="text-3xl font-black text-emerald-600 mt-1">{stats.totalSubmissions}</div>
-                <div className="text-[10px] text-slate-400 mt-1 font-semibold">{stats.totalNotifications} Alerts Sent</div>
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">System Health</div>
+                <div className="text-3xl font-black text-emerald-600 mt-1">100%</div>
+                <div className="text-[10px] text-emerald-650 mt-1 font-semibold">Database online</div>
               </Card>
             </div>
 
@@ -771,36 +957,38 @@ export function AdminControlCenter({
                   </CardTitle>
                   <CardDescription className="text-xs">Live platform and service health stats</CardDescription>
                 </CardHeader>
-                <CardContent className="p-5 space-y-4 text-xs">
-                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                    <span className="text-slate-500 font-bold">API Requests (Telemetry)</span>
-                    <span className="font-black text-slate-800">{health.apiRequestsTotal.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                    <span className="text-slate-500 font-bold">Failed Requests</span>
-                    <span className={`font-black ${health.failedRequests > 0 ? "text-amber-600" : "text-emerald-600"}`}>
-                      {health.failedRequests} ({((health.failedRequests / health.apiRequestsTotal) * 100).toFixed(2)}%)
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                    <span className="text-slate-500 font-bold">Storage Capacity Used</span>
-                    <span className="font-black text-slate-800">{formatBytes(health.storageUsedBytes)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                    <span className="text-slate-500 font-bold">Total File Attachments</span>
-                    <span className="font-black text-slate-800">{health.uploadCount} files</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                    <span className="text-slate-500 font-bold">Database Status</span>
-                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 font-bold rounded-lg px-2 py-0.5">
-                      <HeartPulse className="size-3 mr-1 text-emerald-600" /> {health.dbStatus}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-slate-500 font-bold">Neon Gateway Latency</span>
-                    <span className="font-black text-slate-850">{health.dbLatencyMs} ms</span>
-                  </div>
-                </CardContent>
+                {health && (
+                  <CardContent className="p-5 space-y-4 text-xs">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-slate-500 font-bold">API Requests (Telemetry)</span>
+                      <span className="font-black text-slate-800">{health.apiRequestsTotal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-slate-500 font-bold">Failed Requests</span>
+                      <span className={`font-black ${health.failedRequests > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+                        {health.failedRequests} ({((health.failedRequests / health.apiRequestsTotal) * 100).toFixed(2)}%)
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-slate-500 font-bold">Storage Capacity Used</span>
+                      <span className="font-black text-slate-800">{formatBytes(health.storageUsedBytes)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-slate-500 font-bold">Total File Attachments</span>
+                      <span className="font-black text-slate-800">{health.uploadCount} files</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-slate-500 font-bold">Database Status</span>
+                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 font-bold rounded-lg px-2 py-0.5">
+                        <HeartPulse className="size-3 mr-1 text-emerald-600" /> {health.dbStatus}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-slate-500 font-bold">Neon Gateway Latency</span>
+                      <span className="font-black text-slate-850">{health.dbLatencyMs} ms</span>
+                    </div>
+                  </CardContent>
+                )}
               </Card>
 
               {/* Analytics Insights */}
@@ -816,10 +1004,10 @@ export function AdminControlCenter({
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs font-bold text-slate-700">
                       <span>Project Completion Ratio</span>
-                      <span>{stats.totalProjects > 0 ? Math.round((stats.completedProjects / stats.totalProjects) * 100) : 0}%</span>
+                      <span>{stats && stats.totalProjects > 0 ? Math.round((stats.completedProjects / stats.totalProjects) * 100) : 0}%</span>
                     </div>
                     <Progress
-                      value={stats.totalProjects > 0 ? (stats.completedProjects / stats.totalProjects) * 100 : 0}
+                      value={stats && stats.totalProjects > 0 ? (stats.completedProjects / stats.totalProjects) * 100 : 0}
                       className="h-2 bg-slate-100"
                     />
                   </div>
@@ -827,10 +1015,10 @@ export function AdminControlCenter({
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs font-bold text-slate-700">
                       <span>Evaluation Completion Rate</span>
-                      <span>{stats.totalSubmissions > 0 ? Math.round(((stats.totalSubmissions - stats.pendingReviews) / stats.totalSubmissions) * 100) : 0}%</span>
+                      <span>{stats && stats.totalSubmissions > 0 ? Math.round(((stats.totalSubmissions - stats.pendingReviews) / stats.totalSubmissions) * 100) : 0}%</span>
                     </div>
                     <Progress
-                      value={stats.totalSubmissions > 0 ? ((stats.totalSubmissions - stats.pendingReviews) / stats.totalSubmissions) * 100 : 0}
+                      value={stats && stats.totalSubmissions > 0 ? ((stats.totalSubmissions - stats.pendingReviews) / stats.totalSubmissions) * 100 : 0}
                       className="h-2 bg-indigo-500"
                     />
                   </div>
@@ -844,26 +1032,28 @@ export function AdminControlCenter({
                           <TableHead className="font-bold text-right">Value</TableHead>
                         </TableRow>
                       </TableHeader>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="text-slate-500">Student-to-Faculty Ratio</TableCell>
-                          <TableCell className="text-right font-bold">
-                            {stats.totalFaculty > 0 ? (stats.totalStudents / stats.totalFaculty).toFixed(1) : stats.totalStudents} : 1
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="text-slate-500">Average Team Size</TableCell>
-                          <TableCell className="text-right font-bold">
-                            {stats.totalTeams > 0 ? (stats.totalStudents / stats.totalTeams).toFixed(1) : 0} members
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="text-slate-500">Average Submissions Per Team</TableCell>
-                          <TableCell className="text-right font-bold">
-                            {stats.totalTeams > 0 ? (stats.totalSubmissions / stats.totalTeams).toFixed(1) : 0} submissions
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
+                      {stats && (
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="text-slate-500">Student-to-Faculty Ratio</TableCell>
+                            <TableCell className="text-right font-bold">
+                              {stats.totalFaculty > 0 ? (stats.totalStudents / stats.totalFaculty).toFixed(1) : stats.totalStudents} : 1
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="text-slate-500">Average Team Size</TableCell>
+                            <TableCell className="text-right font-bold">
+                              {stats.totalTeams > 0 ? (stats.totalStudents / stats.totalTeams).toFixed(1) : 0} members
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="text-slate-500">Average Submissions Per Team</TableCell>
+                            <TableCell className="text-right font-bold">
+                              {stats.totalTeams > 0 ? (stats.totalSubmissions / stats.totalTeams).toFixed(1) : 0} submissions
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      )}
                     </Table>
                   </div>
                 </CardContent>
@@ -872,491 +1062,740 @@ export function AdminControlCenter({
           </div>
         )}
 
-        {/* 2. USER DIRECTORY */}
+        {/* 2. GENERAL USER DIRECTORY */}
         {activeTab === "users" && (
-          <div className="space-y-6">
-            {/* Student Management */}
-            <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
-              <CardHeader className="pb-3 border-b border-slate-50">
-                <CardTitle className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
-                  Student Management
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Showing {filteredStudents.length} of {studentsList.length} students
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="font-bold">Student Name</TableHead>
-                      <TableHead className="font-bold">Email</TableHead>
-                      <TableHead className="font-bold">Team Assignment</TableHead>
-                      <TableHead className="font-bold">Account Status</TableHead>
-                      <TableHead className="font-bold">Registration Date</TableHead>
-                      <TableHead className="font-bold text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredStudents.length > 0 ? (
-                      filteredStudents.map((s) => (
-                        <TableRow key={s.id}>
-                          <TableCell className="font-bold">{s.name}</TableCell>
-                          <TableCell className="text-slate-500">{s.email}</TableCell>
-                          <TableCell>
-                            {s.teamName ? (
-                              <div className="text-xs">
-                                <span className="font-semibold">{s.teamName}</span>
-                                <span className="text-slate-400 ml-1.5">({s.teamCode})</span>
-                              </div>
+          <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+            <CardHeader className="pb-3 border-b border-slate-50">
+              <CardTitle className="text-sm font-extrabold text-slate-800">Unified User Directory</CardTitle>
+              <CardDescription className="text-xs">
+                Showing {filteredUsers.length} of {users.length} registered system accounts
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Name</TableHead>
+                    <TableHead className="font-bold">Email</TableHead>
+                    <TableHead className="font-bold">System Role</TableHead>
+                    <TableHead className="font-bold">Account Status</TableHead>
+                    <TableHead className="font-bold">Registered Date</TableHead>
+                    <TableHead className="font-bold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map((u) => (
+                      <TableRow key={u.id}>
+                        <TableCell className="font-bold">{u.name}</TableCell>
+                        <TableCell className="text-slate-500">{u.email}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-bold border-slate-200">
+                            {u.role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={u.isActive ? "secondary" : "destructive"} className="font-bold">
+                            {u.isActive ? "Active" : "Deactivated"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-slate-500 text-xs">
+                          {formatDate(u.createdAt)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setNewRoleValue(u.role as any);
+                                setSelectedUserForRoleChange(u);
+                              }}
+                              className="text-indigo-600 font-bold border-slate-250 hover:bg-slate-50"
+                            >
+                              Role
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUserForPasswordReset(u);
+                              }}
+                              className="text-slate-650 font-bold border-slate-250 hover:bg-slate-50"
+                            >
+                              Reset Pass
+                            </Button>
+                            {u.isActive ? (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeactivateUser(u.id, u.role)}
+                                className="font-bold shadow-none"
+                              >
+                                Deactivate
+                              </Button>
                             ) : (
-                              <span className="text-slate-400 italic">Unassigned</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleActivateUser(u.id, u.role)}
+                                className="text-emerald-600 border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 font-bold"
+                              >
+                                Activate
+                              </Button>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1.5">
-                              <Badge variant={s.isActive ? "secondary" : "destructive"} className="font-bold">
-                                {s.isActive ? "Active" : "Deactivated"}
-                              </Badge>
-                              <Badge
-                                variant={
-                                  s.verificationStatus === "VERIFIED"
-                                    ? "outline"
-                                    : s.verificationStatus === "PENDING"
-                                    ? "default"
-                                    : "destructive"
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to permanently delete user ${u.name}?`)) {
+                                  handleDeleteUser(u.id);
                                 }
-                                className="font-bold text-[10px]"
-                              >
-                                {s.verificationStatus}
-                              </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-slate-500 text-xs">
-                            {formatDate(s.createdAt)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedStudent(s)}
-                                className="text-slate-600 font-bold border-slate-200"
-                              >
-                                Profile
-                              </Button>
-                              {s.isActive ? (
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => handleDeactivateUser(s.id, "STUDENT")}
-                                  className="font-bold shadow-none"
-                                >
-                                  <UserX className="size-3 mr-1" /> Deactivate
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleActivateUser(s.id, "STUDENT")}
-                                  className="text-emerald-600 border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 font-bold"
-                                >
-                                  <UserCheck className="size-3 mr-1" /> Activate
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleResetStudentStatus(s.id)}
-                                className="text-amber-600 hover:bg-amber-50 hover:text-amber-700 font-semibold"
-                                title="Reset Verification Status"
-                              >
-                                <RotateCcw className="size-3" /> Reset
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-slate-400 py-6 italic">
-                          No students found matching filters.
+                              }}
+                              className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-bold"
+                            >
+                              Delete
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            {/* Faculty Management */}
-            <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
-              <CardHeader className="pb-3 border-b border-slate-50">
-                <CardTitle className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
-                  Faculty Management
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Showing {filteredFaculty.length} of {facultyList.length} faculty advisors
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
+                    ))
+                  ) : (
                     <TableRow>
-                      <TableHead className="font-bold">Faculty Name</TableHead>
-                      <TableHead className="font-bold">Email</TableHead>
-                      <TableHead className="font-bold">Assigned Teams</TableHead>
-                      <TableHead className="font-bold">Review Activity</TableHead>
-                      <TableHead className="font-bold">Account Status</TableHead>
-                      <TableHead className="font-bold text-right">Actions</TableHead>
+                      <TableCell colSpan={6} className="text-center text-slate-400 py-6 italic">
+                        No users found matching filters.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredFaculty.length > 0 ? (
-                      filteredFaculty.map((f) => (
-                        <TableRow key={f.id}>
-                          <TableCell className="font-bold">{f.name}</TableCell>
-                          <TableCell className="text-slate-500">{f.email}</TableCell>
-                          <TableCell>
-                            {f.assignedTeams.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
-                                {f.assignedTeams.map((team) => (
-                                  <Badge key={team} variant="outline" className="bg-slate-50 text-slate-650 text-[10px]">
-                                    {team}
-                                  </Badge>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-slate-400 italic">None</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-bold text-xs">{f.reviewCount} Reviews</TableCell>
-                          <TableCell>
-                            <Badge variant={f.isActive ? "secondary" : "destructive"} className="font-bold">
-                              {f.isActive ? "Active" : "Deactivated"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedFaculty(f)}
-                                className="text-slate-600 font-bold border-slate-200"
-                              >
-                                Profile
-                              </Button>
-                              {f.isActive ? (
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => handleDeactivateUser(f.id, "FACULTY")}
-                                  className="font-bold shadow-none"
-                                >
-                                  <UserX className="size-3 mr-1" /> Deactivate
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleActivateUser(f.id, "FACULTY")}
-                                  className="text-emerald-600 border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 font-bold"
-                                >
-                                  <UserCheck className="size-3 mr-1" /> Activate
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-slate-400 py-6 italic">
-                          No faculty found matching filters.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         )}
 
-        {/* 3. TEAMS & PROJECTS */}
-        {activeTab === "teams-projects" && (
-          <div className="space-y-6">
-            {/* Teams Management */}
-            <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
-              <CardHeader className="pb-3 border-b border-slate-50">
-                <CardTitle className="text-sm font-extrabold text-slate-800">Team Management</CardTitle>
-                <CardDescription className="text-xs">
-                  Rosters, codes, and execution states
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="font-bold">Team Name</TableHead>
-                      <TableHead className="font-bold">Team Code</TableHead>
-                      <TableHead className="font-bold">Team Lead</TableHead>
-                      <TableHead className="font-bold">Members Count</TableHead>
-                      <TableHead className="font-bold">Project Status</TableHead>
-                      <TableHead className="font-bold text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTeams.length > 0 ? (
-                      filteredTeams.map((t) => (
-                        <TableRow key={t.id}>
-                          <TableCell className="font-bold text-slate-800">{t.name}</TableCell>
-                          <TableCell>
-                            <code className="bg-slate-50 border border-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-mono">
-                              {t.teamCode || "NO_CODE"}
-                            </code>
-                          </TableCell>
-                          <TableCell className="font-semibold text-slate-650">{t.leadName || "None"}</TableCell>
-                          <TableCell className="text-slate-500 font-bold text-xs">{t.memberCount} Members</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="font-bold capitalize border-slate-200">
-                              {t.projectStatus.toLowerCase()}
+        {/* 3. STUDENT DIRECTORY */}
+        {activeTab === "students" && (
+          <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+            <CardHeader className="pb-3 border-b border-slate-50">
+              <CardTitle className="text-sm font-extrabold text-slate-800">Student Profiles Directory</CardTitle>
+              <CardDescription className="text-xs">
+                Showing {filteredStudents.length} of {studentsList.length} students
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Student Name</TableHead>
+                    <TableHead className="font-bold">Email</TableHead>
+                    <TableHead className="font-bold">Team Assignment</TableHead>
+                    <TableHead className="font-bold">Verification Status</TableHead>
+                    <TableHead className="font-bold">Registration Date</TableHead>
+                    <TableHead className="font-bold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredStudents.length > 0 ? (
+                    filteredStudents.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-bold">{s.name}</TableCell>
+                        <TableCell className="text-slate-500">{s.email}</TableCell>
+                        <TableCell>
+                          {s.teamName ? (
+                            <div className="text-xs">
+                              <span className="font-semibold">{s.teamName}</span>
+                              <span className="text-slate-400 ml-1.5">({s.teamCode})</span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 italic">Unassigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1.5">
+                            <Badge variant={s.isActive ? "secondary" : "destructive"} className="font-bold">
+                              {s.isActive ? "Active" : "Deactivated"}
                             </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
+                            <Badge
+                              variant={
+                                s.verificationStatus === "VERIFIED"
+                                  ? "outline"
+                                  : s.verificationStatus === "PENDING"
+                                  ? "default"
+                                  : "destructive"
+                              }
+                              className="font-bold text-[10px]"
+                            >
+                              {s.verificationStatus}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-slate-500 text-xs">
+                          {formatDate(s.createdAt)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedStudent(s)}
+                              className="text-slate-650 font-bold border-slate-200"
+                            >
+                              Profile Details
+                            </Button>
+                            {s.isActive ? (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeactivateUser(s.id, "STUDENT")}
+                                className="font-bold shadow-none"
+                              >
+                                Deactivate
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleActivateUser(s.id, "STUDENT")}
+                                className="text-emerald-600 border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 font-bold"
+                              >
+                                Activate
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleResetStudentStatus(s.id)}
+                              className="text-amber-600 hover:bg-amber-50 hover:text-amber-700 font-semibold"
+                            >
+                              Reset Verification
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-slate-400 py-6 italic">
+                        No students found matching filters.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 4. FACULTY DIRECTORY */}
+        {activeTab === "faculty" && (
+          <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+            <CardHeader className="pb-3 border-b border-slate-50">
+              <CardTitle className="text-sm font-extrabold text-slate-800">Faculty Advisors Directory</CardTitle>
+              <CardDescription className="text-xs">
+                Showing {filteredFaculty.length} of {facultyList.length} faculty advisors
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Faculty Name</TableHead>
+                    <TableHead className="font-bold">Email</TableHead>
+                    <TableHead className="font-bold">Department</TableHead>
+                    <TableHead className="font-bold">Assigned Teams</TableHead>
+                    <TableHead className="font-bold">Review Activity</TableHead>
+                    <TableHead className="font-bold">Account Status</TableHead>
+                    <TableHead className="font-bold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredFaculty.length > 0 ? (
+                    filteredFaculty.map((f) => (
+                      <TableRow key={f.id}>
+                        <TableCell className="font-bold">{f.name}</TableCell>
+                        <TableCell className="text-slate-500">{f.email}</TableCell>
+                        <TableCell className="text-slate-700 font-medium">{f.department || "General"}</TableCell>
+                        <TableCell>
+                          {f.assignedTeams.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {f.assignedTeams.map((team) => (
+                                <Badge key={team} variant="outline" className="bg-slate-50 text-slate-650 text-[10px]">
+                                  {team}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 italic">No teams assigned</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-bold text-xs">{f.reviewCount} Reviews</TableCell>
+                        <TableCell>
+                          <Badge variant={f.isActive ? "secondary" : "destructive"} className="font-bold">
+                            {f.isActive ? "Active" : "Deactivated"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedFaculty(f)}
+                              className="text-slate-650 font-bold border-slate-200"
+                            >
+                              Oversight Details
+                            </Button>
+                            {f.isActive ? (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeactivateUser(f.id, "FACULTY")}
+                                className="font-bold shadow-none"
+                              >
+                                Deactivate
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleActivateUser(f.id, "FACULTY")}
+                                className="text-emerald-600 border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 font-bold"
+                              >
+                                Activate
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-slate-400 py-6 italic">
+                        No faculty advisors found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 5. PROJECT MANAGEMENT */}
+        {activeTab === "projects" && (
+          <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+            <CardHeader className="pb-3 border-b border-slate-50">
+              <CardTitle className="text-sm font-extrabold text-slate-800">Project Management & Control</CardTitle>
+              <CardDescription className="text-xs">
+                Archiving, restoring, or force closing academic research and engineering projects
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Project Title</TableHead>
+                    <TableHead className="font-bold">Domain</TableHead>
+                    <TableHead className="font-bold">Assigned Team</TableHead>
+                    <TableHead className="font-bold">Current Sprint</TableHead>
+                    <TableHead className="font-bold">Progress (%)</TableHead>
+                    <TableHead className="font-bold">Status</TableHead>
+                    <TableHead className="font-bold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProjects.length > 0 ? (
+                    filteredProjects.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-bold max-w-[240px] truncate" title={p.title}>
+                          {p.title}
+                        </TableCell>
+                        <TableCell className="text-slate-500">{p.domain}</TableCell>
+                        <TableCell className="font-semibold text-slate-750">
+                          {p.teamName || <span className="text-slate-400 italic">Unassigned</span>}
+                        </TableCell>
+                        <TableCell className="text-xs font-bold text-slate-500">Week {p.currentWeek}</TableCell>
+                        <TableCell className="min-w-[150px]">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-700">{p.progress}%</span>
+                            <Progress value={p.progress} className="h-1.5 flex-1" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={p.status === "COMPLETED" ? "secondary" : p.status === "ON_HOLD" ? "destructive" : "default"} className="font-bold">
+                            {p.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1.5">
+                            {p.status !== "ON_HOLD" ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleArchiveProject(p.id)}
+                                className="text-amber-600 border-amber-100 hover:bg-amber-50 font-bold"
+                              >
+                                Archive
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRestoreProject(p.id)}
+                                className="text-emerald-600 border-emerald-150 hover:bg-emerald-50 font-bold"
+                              >
+                                Restore
+                              </Button>
+                            )}
+                            {p.status !== "COMPLETED" && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm(`Force close project "${p.title}"? Status will be set to COMPLETED.`)) {
+                                    handleForceCloseProject(p.id);
+                                  }
+                                }}
+                                className="font-bold"
+                              >
+                                Force Close
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-slate-400 py-6 italic">
+                        No projects found matching filters.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 6. TEAM MANAGEMENT */}
+        {activeTab === "teams" && (
+          <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+            <CardHeader className="pb-3 border-b border-slate-50">
+              <CardTitle className="text-sm font-extrabold text-slate-800">Team Workspace & Assignments Management</CardTitle>
+              <CardDescription className="text-xs">
+                Disbanding teams, transferring ownership, and auditing code rosters
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Team Name</TableHead>
+                    <TableHead className="font-bold">Team Code</TableHead>
+                    <TableHead className="font-bold">Team Lead</TableHead>
+                    <TableHead className="font-bold">Members Count</TableHead>
+                    <TableHead className="font-bold">Project status</TableHead>
+                    <TableHead className="font-bold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTeams.length > 0 ? (
+                    filteredTeams.map((t) => (
+                      <TableRow key={t.id}>
+                        <TableCell className="font-bold text-slate-800">{t.name}</TableCell>
+                        <TableCell>
+                          <code className="bg-slate-50 border border-slate-100 text-slate-755 px-2 py-0.5 rounded text-xs font-mono">
+                            {t.teamCode || "NO_CODE"}
+                          </code>
+                        </TableCell>
+                        <TableCell className="font-semibold text-slate-650">{t.leadName || "None"}</TableCell>
+                        <TableCell className="text-slate-500 font-bold text-xs">{t.memberCount} Members</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-bold capitalize border-slate-200">
+                            {t.projectStatus.toLowerCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1.5">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => setSelectedTeam(t)}
                               className="text-indigo-600 border-indigo-100 hover:bg-indigo-50 font-bold"
                             >
-                              View Details
+                              Roster Details
                             </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-slate-400 py-6 italic">
-                          No teams found.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            {/* Projects Oversight */}
-            <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
-              <CardHeader className="pb-3 border-b border-slate-50">
-                <CardTitle className="text-sm font-extrabold text-slate-800">Project Management Oversight (View-Only)</CardTitle>
-                <CardDescription className="text-xs">
-                  Milestone execution tracking and progress index
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="font-bold">Project Title</TableHead>
-                      <TableHead className="font-bold">Domain</TableHead>
-                      <TableHead className="font-bold">Assigned Team</TableHead>
-                      <TableHead className="font-bold">Current Sprint</TableHead>
-                      <TableHead className="font-bold">Progress (%)</TableHead>
-                      <TableHead className="font-bold">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredProjects.length > 0 ? (
-                      filteredProjects.map((p) => (
-                        <TableRow key={p.id}>
-                          <TableCell className="font-bold max-w-[240px] truncate" title={p.title}>
-                            {p.title}
-                          </TableCell>
-                          <TableCell className="text-slate-500">{p.domain}</TableCell>
-                          <TableCell className="font-semibold text-slate-750">
-                            {p.teamName || <span className="text-slate-400 italic">Unassigned</span>}
-                          </TableCell>
-                          <TableCell className="text-xs font-bold text-slate-500">Week {p.currentWeek}</TableCell>
-                          <TableCell className="min-w-[150px]">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-slate-700">{p.progress}%</span>
-                              <Progress value={p.progress} className="h-1.5 flex-1" />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={p.status === "COMPLETED" ? "secondary" : "default"} className="font-bold">
-                              {p.status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-slate-400 py-6 italic">
-                          No projects found.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* 4. SUBMISSIONS & EVALUATIONS */}
-        {activeTab === "submissions-evals" && (
-          <div className="space-y-6">
-            {/* Submission Monitoring */}
-            <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
-              <CardHeader className="pb-3 border-b border-slate-50">
-                <CardTitle className="text-sm font-extrabold text-slate-800">Student Deliveries & Evidence Files</CardTitle>
-                <CardDescription className="text-xs">
-                  Review queue, status checklist, and file attachments
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="font-bold">Submission Title</TableHead>
-                      <TableHead className="font-bold">Team</TableHead>
-                      <TableHead className="font-bold">Type</TableHead>
-                      <TableHead className="font-bold">Status</TableHead>
-                      <TableHead className="font-bold">Submitted At</TableHead>
-                      <TableHead className="font-bold">Files</TableHead>
-                      <TableHead className="font-bold text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSubmissions.length > 0 ? (
-                      filteredSubmissions.map((s) => (
-                        <TableRow key={s.id}>
-                          <TableCell className="font-bold max-w-[200px] truncate" title={s.title}>
-                            {s.title}
-                          </TableCell>
-                          <TableCell className="font-semibold text-slate-700">{s.teamName}</TableCell>
-                          <TableCell className="text-slate-500 font-semibold text-xs">{s.type}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                s.status === "APPROVED"
-                                  ? "secondary"
-                                  : s.status === "PENDING_REVIEW" || s.status === "UNDER_REVIEW"
-                                  ? "outline"
-                                  : "destructive"
-                              }
-                              className="font-bold rounded-lg"
-                            >
-                              {s.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-slate-450 text-xs">
-                            {formatDate(s.submittedAt)}
-                          </TableCell>
-                          <TableCell>
-                            {s.files.length > 0 ? (
-                              <div className="flex flex-col gap-1 text-[10px]">
-                                {s.files.map((file) => (
-                                  <a
-                                    key={file.id}
-                                    href={`/api/files/${file.id}/download`}
-                                    download
-                                    className="flex items-center gap-1 text-indigo-600 hover:text-indigo-850 hover:underline font-bold"
-                                  >
-                                    <FileDown className="size-3" /> {file.fileName}
-                                  </a>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-slate-400 text-xs italic">No attachments</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
                             <Button
-                              variant="outline"
+                              variant="destructive"
                               size="sm"
-                              onClick={() => setSelectedSubmission(s)}
-                              className="text-slate-600 border-slate-200 font-bold"
+                              onClick={() => {
+                                if (confirm(`Disband team "${t.name}"? Members will be unassigned and team deleted.`)) {
+                                  handleDisbandTeam(t.id);
+                                }
+                              }}
+                              className="font-bold"
                             >
-                              View Review
+                              Disband Team
                             </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center text-slate-400 py-6 italic">
-                          No submissions matched your search filters.
+                          </div>
                         </TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            {/* Evaluation Monitoring */}
-            <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
-              <CardHeader className="pb-3 border-b border-slate-50">
-                <CardTitle className="text-sm font-extrabold text-slate-800">Faculty Evaluations Audit (View-Only)</CardTitle>
-                <CardDescription className="text-xs">
-                  Grades, rubrics, and feedback comments logged by advisors
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
+                    ))
+                  ) : (
                     <TableRow>
-                      <TableHead className="font-bold">Team Name</TableHead>
-                      <TableHead className="font-bold">Project</TableHead>
-                      <TableHead className="font-bold">Sprint Week</TableHead>
-                      <TableHead className="font-bold text-center">Score</TableHead>
-                      <TableHead className="font-bold">Feedback Comments</TableHead>
-                      <TableHead className="font-bold">Evaluated By</TableHead>
-                      <TableHead className="font-bold">Review Date</TableHead>
+                      <TableCell colSpan={6} className="text-center text-slate-400 py-6 italic">
+                        No teams found matching filters.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredEvaluations.length > 0 ? (
-                      filteredEvaluations.map((e) => (
-                        <TableRow key={e.id}>
-                          <TableCell className="font-bold text-slate-800">{e.teamName}</TableCell>
-                          <TableCell className="max-w-[200px] truncate" title={e.projectTitle}>
-                            {e.projectTitle}
-                          </TableCell>
-                          <TableCell className="text-slate-500 font-bold text-xs">Week {e.weekNumber}</TableCell>
-                          <TableCell className="text-center">
-                            <span className="font-black text-sm text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
-                              {e.score}
-                            </span>
-                          </TableCell>
-                          <TableCell className="max-w-[280px] truncate text-slate-500 text-xs" title={e.feedback || ""}>
-                            {e.feedback || <span className="text-slate-400 italic">No feedback provided</span>}
-                          </TableCell>
-                          <TableCell className="font-semibold text-slate-650">{e.facultyName}</TableCell>
-                          <TableCell className="text-slate-450 text-xs">
-                            {formatDate(e.reviewDate)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center text-slate-400 py-6 italic">
-                          No evaluations found.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         )}
 
-        {/* 5. NOTIFICATIONS */}
+        {/* 7. APPLICATION MANAGEMENT */}
+        {activeTab === "applications" && (
+          <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+            <CardHeader className="pb-3 border-b border-slate-50">
+              <CardTitle className="text-sm font-extrabold text-slate-800">Student Onboarding & Team Requests</CardTitle>
+              <CardDescription className="text-xs">
+                Triage student requests to assign them to active project teams and verify their profiles
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Student</TableHead>
+                    <TableHead className="font-bold">College</TableHead>
+                    <TableHead className="font-bold">Dept & Sec</TableHead>
+                    <TableHead className="font-bold">Advisor Requested</TableHead>
+                    <TableHead className="font-bold">Notes</TableHead>
+                    <TableHead className="font-bold">Created At</TableHead>
+                    <TableHead className="font-bold">Status</TableHead>
+                    <TableHead className="font-bold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredApplications.length > 0 ? (
+                    filteredApplications.map((app) => (
+                      <TableRow key={app.id}>
+                        <TableCell>
+                          <div className="font-bold text-slate-800">{app.studentName}</div>
+                          <div className="text-[10px] text-slate-450">{app.studentEmail}</div>
+                        </TableCell>
+                        <TableCell className="text-slate-650 font-medium">{app.collegeName}</TableCell>
+                        <TableCell className="text-slate-500 font-bold text-xs">{app.department} (Sec {app.section})</TableCell>
+                        <TableCell className="font-semibold text-slate-700">{app.facultyName}</TableCell>
+                        <TableCell className="max-w-[200px] truncate text-slate-500" title={app.notes || ""}>
+                          {app.notes || <span className="text-slate-400 italic">No notes</span>}
+                        </TableCell>
+                        <TableCell className="text-slate-450 text-xs">{formatDate(app.createdAt)}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={app.status === "approved" ? "secondary" : app.status === "pending" ? "default" : "destructive"}
+                            className="font-bold"
+                          >
+                            {app.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {app.status === "pending" ? (
+                            <div className="flex justify-end gap-1.5">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedApplication(app);
+                                  setAssignTeamId("");
+                                }}
+                                className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 font-bold"
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm(`Reject onboarding application from ${app.studentName}?`)) {
+                                    handleRejectApplication(app.id);
+                                  }
+                                }}
+                                className="font-bold"
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400 font-semibold italic">Processed</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center text-slate-400 py-8 italic text-xs">
+                        No onboarding applications pending.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 8. SUBMISSIONS */}
+        {activeTab === "submissions" && (
+          <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+            <CardHeader className="pb-3 border-b border-slate-50">
+              <CardTitle className="text-sm font-extrabold text-slate-800">Sprint Deliveries & Artifacts Logs</CardTitle>
+              <CardDescription className="text-xs">
+                Showing all weekly, IEEE sections, literature reviews, and final team uploads
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Submission Title</TableHead>
+                    <TableHead className="font-bold">Team</TableHead>
+                    <TableHead className="font-bold">Type</TableHead>
+                    <TableHead className="font-bold">Status</TableHead>
+                    <TableHead className="font-bold">Submitted At</TableHead>
+                    <TableHead className="font-bold">Files</TableHead>
+                    <TableHead className="font-bold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSubmissions.length > 0 ? (
+                    filteredSubmissions.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-bold max-w-[200px] truncate" title={s.title}>
+                          {s.title}
+                        </TableCell>
+                        <TableCell className="font-semibold text-slate-700">{s.teamName}</TableCell>
+                        <TableCell className="text-slate-500 font-semibold text-xs">{s.type}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              s.status === "APPROVED"
+                                ? "secondary"
+                                : s.status === "PENDING_REVIEW" || s.status === "UNDER_REVIEW"
+                                ? "outline"
+                                : "destructive"
+                            }
+                            className="font-bold rounded-lg"
+                          >
+                            {s.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-slate-450 text-xs">
+                          {formatDate(s.submittedAt)}
+                        </TableCell>
+                        <TableCell>
+                          {s.files.length > 0 ? (
+                            <div className="flex flex-col gap-1 text-[10px]">
+                              {s.files.map((file) => (
+                                <a
+                                  key={file.id}
+                                  href={`/api/files/${file.id}/download`}
+                                  download
+                                  className="flex items-center gap-1 text-indigo-600 hover:text-indigo-850 hover:underline font-bold"
+                                >
+                                  <FileDown className="size-3" /> {file.fileName}
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 text-xs italic">No attachments</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedSubmission(s)}
+                            className="text-slate-600 border-slate-200 font-bold"
+                          >
+                            View Review Details
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-slate-400 py-6 italic">
+                        No submissions matched your search filters.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 9. EVALUATIONS */}
+        {activeTab === "evaluations" && (
+          <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+            <CardHeader className="pb-3 border-b border-slate-50">
+              <CardTitle className="text-sm font-extrabold text-slate-800">Faculty Evaluations Audit Log</CardTitle>
+              <CardDescription className="text-xs">
+                Auditing grades, scores, and review logs entered by department advisors
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Team Name</TableHead>
+                    <TableHead className="font-bold">Project</TableHead>
+                    <TableHead className="font-bold">Sprint Week</TableHead>
+                    <TableHead className="font-bold text-center">Score</TableHead>
+                    <TableHead className="font-bold">Feedback Comments</TableHead>
+                    <TableHead className="font-bold">Evaluated By</TableHead>
+                    <TableHead className="font-bold">Review Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredEvaluations.length > 0 ? (
+                    filteredEvaluations.map((e) => (
+                      <TableRow key={e.id}>
+                        <TableCell className="font-bold text-slate-800">{e.teamName}</TableCell>
+                        <TableCell className="max-w-[200px] truncate" title={e.projectTitle}>
+                          {e.projectTitle}
+                        </TableCell>
+                        <TableCell className="text-slate-500 font-bold text-xs">Week {e.weekNumber}</TableCell>
+                        <TableCell className="text-center">
+                          <span className="font-black text-sm text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
+                            {e.score}
+                          </span>
+                        </TableCell>
+                        <TableCell className="max-w-[280px] truncate text-slate-500 text-xs" title={e.feedback || ""}>
+                          {e.feedback || <span className="text-slate-400 italic">No feedback provided</span>}
+                        </TableCell>
+                        <TableCell className="font-semibold text-slate-650">{e.facultyName}</TableCell>
+                        <TableCell className="text-slate-450 text-xs">
+                          {formatDate(e.reviewDate)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-slate-400 py-6 italic">
+                        No evaluations logged yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 10. NOTIFICATIONS LOG */}
         {activeTab === "notifications" && (
           <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
             <CardHeader className="pb-3 border-b border-slate-50">
@@ -1414,32 +1853,32 @@ export function AdminControlCenter({
           </Card>
         )}
 
-        {/* 6. AUDIT TRAIL */}
+        {/* 11. IMMUTABLE AUDIT TRAIL */}
         {activeTab === "audits" && (
           <div className="space-y-6">
             {/* Audit Logs Dashboard Overview Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total Events</div>
                 <div className="text-2xl font-black text-slate-900 mt-1">{auditStats.totalEvents}</div>
               </Card>
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Events Today</div>
                 <div className="text-2xl font-black text-indigo-600 mt-1">{auditStats.eventsToday}</div>
               </Card>
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Failed Logins</div>
                 <div className="text-2xl font-black text-rose-600 mt-1">{auditStats.failedLogins}</div>
               </Card>
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Submissions</div>
                 <div className="text-2xl font-black text-indigo-700 mt-1">{auditStats.submissionActivity}</div>
               </Card>
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Evaluations</div>
                 <div className="text-2xl font-black text-emerald-600 mt-1">{auditStats.evaluationActivity}</div>
               </Card>
-              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between">
+              <Card className="border-slate-100 shadow-sm p-4 bg-white flex flex-col justify-between rounded-2xl">
                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Admin Actions</div>
                 <div className="text-2xl font-black text-slate-700 mt-1">{auditStats.administrativeActions}</div>
               </Card>
@@ -1591,7 +2030,7 @@ export function AdminControlCenter({
                               </p>
 
                               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100/50 mt-2 flex-wrap">
-                                <div className="flex items-center gap-1.5 text-[10px] text-slate-450 font-bold">
+                                <div className="flex items-center gap-1.5 text-[10px] text-slate-455 font-bold">
                                   {log.user ? (
                                     <span>By: <span className="text-slate-700">{log.user.name}</span> ({log.userRole})</span>
                                   ) : (
@@ -1609,7 +2048,7 @@ export function AdminControlCenter({
                                   {(log.previousState || log.metadata) && (
                                     <button
                                       onClick={() => setSelectedAuditLog(log)}
-                                      className="text-[9px] font-bold text-slate-900 hover:text-black underline flex items-center gap-0.5 cursor-pointer"
+                                      className="text-[9px] font-bold text-slate-950 hover:text-black underline flex items-center gap-0.5 cursor-pointer"
                                     >
                                       <History className="size-3 text-indigo-600" /> View Transition Details
                                     </button>
@@ -1652,6 +2091,127 @@ export function AdminControlCenter({
                 </div>
               )}
             </Card>
+          </div>
+        )}
+
+        {/* 12. SYSTEM SETTINGS */}
+        {activeTab === "settings" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2 border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+              <CardHeader className="pb-3 border-b border-slate-50 bg-[#FAF9F5]">
+                <CardTitle className="text-sm font-extrabold text-slate-850 flex items-center gap-1.5">
+                  <Settings className="size-4 text-indigo-600" /> System Settings & Configuration
+                </CardTitle>
+                <CardDescription className="text-xs">Configure system features, notifications, and rate limits</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6 text-sm">
+                <div className="flex items-center justify-between py-3 border-b border-slate-100">
+                  <div>
+                    <h4 className="font-bold text-slate-800">Student Profile Verification</h4>
+                    <p className="text-xs text-slate-550 mt-1">Force students to be verified by faculty before letting them submit artifacts.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={requireVerifyBeforeAccess}
+                      onChange={(e) => setRequireVerifyBeforeAccess(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  </label>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-bold text-slate-850 border-b border-slate-50 pb-2">Email Configuration (SMTP)</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-650">Host Server</label>
+                      <Input
+                        type="text"
+                        value={emailSmtpHost}
+                        onChange={(e) => setEmailSmtpHost(e.target.value)}
+                        className="h-10 text-xs rounded-xl bg-white border-slate-200 focus-visible:ring-black"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-655">Port</label>
+                      <Input
+                        type="text"
+                        value={emailPort}
+                        onChange={(e) => setEmailPort(e.target.value)}
+                        className="h-10 text-xs rounded-xl bg-white border-slate-200 focus-visible:ring-black"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-bold text-slate-855 border-b border-slate-50 pb-2">Log Retention Policy</h4>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-660">Audit Retention period (Days)</label>
+                    <select
+                      value={logRetentionDays}
+                      onChange={(e) => setLogRetentionDays(e.target.value)}
+                      className="w-full h-10 border border-slate-200 rounded-xl px-3 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-black"
+                    >
+                      <option value="30">30 Days (Sandbox)</option>
+                      <option value="90">90 Days (Standard Compliance)</option>
+                      <option value="365">1 Year (Enterprise Archive)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-bold text-slate-860 border-b border-slate-50 pb-2">API Security & Rate Limits</h4>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-665">Max Requests Per Minute (RPM)</label>
+                    <Input
+                      type="number"
+                      value={rateLimitRequests}
+                      onChange={(e) => setRateLimitRequests(e.target.value)}
+                      className="h-10 text-xs rounded-xl bg-white border-slate-200 focus-visible:ring-black"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => {
+                    toast.success("System settings updated successfully.");
+                  }}
+                  className="bg-indigo-650 text-white hover:bg-indigo-700 h-10 px-6 font-bold rounded-xl shadow-md shadow-indigo-600/10 transition-colors"
+                >
+                  Save Configuration
+                </Button>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              <Card className="border-slate-100 shadow-sm bg-white overflow-hidden rounded-2xl">
+                <CardHeader className="pb-3 border-b border-slate-50 bg-[#FAF9F5]">
+                  <CardTitle className="text-sm font-extrabold text-slate-850 flex items-center gap-1.5">
+                    Feature Toggles
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-5 space-y-4 text-xs font-bold text-slate-600">
+                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                    <span>GitHub Actions CI Hooks</span>
+                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 font-bold rounded-lg px-2 py-0.5">Enabled</Badge>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                    <span>IEEE Report Linter Engine</span>
+                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 font-bold rounded-lg px-2 py-0.5">Enabled</Badge>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                    <span>Auto-disband Inactive Teams</span>
+                    <Badge variant="outline" className="bg-slate-50 text-slate-650 border-slate-200 font-bold rounded-lg px-2 py-0.5">Disabled</Badge>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span>Viva Oral Defense Simulation</span>
+                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 font-bold rounded-lg px-2 py-0.5">Enabled</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
       </div>

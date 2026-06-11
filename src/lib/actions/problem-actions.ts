@@ -53,8 +53,22 @@ const selectProjectSchema = z.object({
 });
 
 export async function selectProblemAsProjectAction(input: unknown) {
-  const session = await requireRole("STUDENT");
+  // Validate authorization
+  let session;
+  try {
+    session = await requireRole("STUDENT");
+  } catch (authError) {
+    console.error("[DEBUG LOG] Authorization failed: User is not a STUDENT.");
+    return {
+      success: false,
+      message: "Only team leader can assign project",
+      status: 403,
+    };
+  }
+
   const parsed = selectProjectSchema.safeParse(input);
+  console.log("[DEBUG LOG] API Payload:", JSON.stringify(input));
+  console.log("[DEBUG LOG] Validation Result:", parsed.success ? "SUCCESS" : "FAILED", parsed.success ? "" : parsed.error.issues);
 
   if (!parsed.success) {
     return {
@@ -67,47 +81,78 @@ export async function selectProblemAsProjectAction(input: unknown) {
   const userName = session.user.name || "Student";
   const problemId = parsed.data.problemId;
 
+  console.log("[DEBUG LOG] Current User ID:", userId);
+  console.log("[DEBUG LOG] Selected Problem ID:", problemId);
+
   try {
     // 1. Check if user already has a team membership
     const existingMembership = await db.teamMember.findFirst({
       where: { userId },
     });
     
+    console.log("[DEBUG LOG] Database Query Result (Membership):", existingMembership);
+    if (existingMembership) {
+      console.log("[DEBUG LOG] Current Team ID:", existingMembership.teamId);
+      console.log("[DEBUG LOG] Current Team Role:", existingMembership.role);
+    } else {
+      console.log("[DEBUG LOG] No active team membership found.");
+    }
+
     // 2. Fetch problem details
     const problem = await db.problem.findUnique({
       where: { id: problemId },
     });
+    console.log("[DEBUG LOG] Database Query Result (Problem):", problem);
+
     if (!problem) {
       return {
         success: false,
-        message: "Problem brief not found.",
+        message: "Problem statement not found",
       };
     }
 
-    if (!existingMembership || existingMembership.role !== "TEAM_LEAD") {
-      return {
-        success: false,
-        message: "Only the Team Lead can select a Problem Statement.",
-        status: 403,
-      };
+    // Authorization verification
+    if (existingMembership) {
+      if (existingMembership.role !== "TEAM_LEAD") {
+        return {
+          success: false,
+          message: "Only team leader can assign project",
+          status: 403,
+        };
+      }
     }
 
     if (existingMembership) {
-
       // Fetch team details
       const team = await db.team.findUnique({
         where: { id: existingMembership.teamId },
       });
+      console.log("[DEBUG LOG] Database Query Result (Team):", team);
 
       if (!team) {
         return {
           success: false,
-          message: "Associated team not found.",
+          message: "Team not found",
+        };
+      }
+
+      if (team.status !== "ACTIVE") {
+        return {
+          success: false,
+          message: "Team is not active",
+        };
+      }
+
+      // Check if problem statement is already assigned to a different team
+      if (problem.isAssigned && team.selectedProblemStatementId !== problem.id) {
+        return {
+          success: false,
+          message: "Project already assigned",
         };
       }
 
       // Update existing team project
-      await db.$transaction(async (tx: any) => {
+      const transactionResult = await db.$transaction(async (tx: any) => {
         // Release old problem statement if any
         if (team.selectedProblemStatementId && team.selectedProblemStatementId !== problem.id) {
           await tx.problem.update({
@@ -116,7 +161,7 @@ export async function selectProblemAsProjectAction(input: unknown) {
           });
         }
 
-        await tx.project.update({
+        const projectUpdate = await tx.project.update({
           where: { id: team.projectId },
           data: {
             title: problem.title,
@@ -130,7 +175,7 @@ export async function selectProblemAsProjectAction(input: unknown) {
           },
         });
 
-        await tx.team.update({
+        const teamUpdate = await tx.team.update({
           where: { id: team.id },
           data: {
             projectTitle: problem.title,
@@ -138,7 +183,7 @@ export async function selectProblemAsProjectAction(input: unknown) {
           },
         });
 
-        await tx.problem.update({
+        const problemUpdate = await tx.problem.update({
           where: { id: problem.id },
           data: { isAssigned: true },
         });
@@ -148,7 +193,13 @@ export async function selectProblemAsProjectAction(input: unknown) {
           where: { projectId: team.projectId },
         });
         await initializeProjectWeeklyMilestones(team.projectId, tx, new Date());
+
+        return { projectUpdate, teamUpdate, problemUpdate };
+      }, {
+        timeout: 30000, // Fixed 30s timeout to support Neon Serverless Postgres latency
       });
+
+      console.log("[DEBUG LOG] Transaction Result:", JSON.stringify(transactionResult));
 
       try {
         const { logSystemEvent } = await import("@/lib/services/audit-service");
@@ -184,7 +235,7 @@ export async function selectProblemAsProjectAction(input: unknown) {
       };
     }
 
-    // 3. Find a faculty to assign as default mentor
+    // 3. Find a faculty to assign as default mentor (onboarding flow)
     const faculty = await db.user.findFirst({
       where: { role: "FACULTY" },
     });
@@ -192,6 +243,14 @@ export async function selectProblemAsProjectAction(input: unknown) {
       return {
         success: false,
         message: "No faculty advisors found in the database. Please contact support.",
+      };
+    }
+
+    // Check if problem statement is already assigned
+    if (problem.isAssigned) {
+      return {
+        success: false,
+        message: "Project already assigned",
       };
     }
 
@@ -230,8 +289,6 @@ export async function selectProblemAsProjectAction(input: unknown) {
           projectFacultyId: faculty.id,
         },
       });
-
-
 
       // Generate a unique team code
       const teamCode = await generateUniqueTeamCode(tx);
@@ -273,7 +330,7 @@ export async function selectProblemAsProjectAction(input: unknown) {
         data: {
           teamId: team.id,
           facultyId: faculty.id,
-          mentorId: faculty.id, // Set the default faculty advisor as mentor
+          mentorId: faculty.id,
           joinedTeamAt: new Date(),
         },
       });
@@ -351,7 +408,6 @@ export async function selectProblemAsProjectAction(input: unknown) {
       });
 
       // 4b. Trigger notifications for Project Created and Problem Statement Selected
-      // Notify the team lead (the user who ran this)
       await tx.notification.create({
         data: {
           userId,
@@ -376,7 +432,6 @@ export async function selectProblemAsProjectAction(input: unknown) {
         },
       });
 
-      // Notify the Faculty Advisor
       await tx.notification.create({
         data: {
           userId: faculty.id,
@@ -405,7 +460,11 @@ export async function selectProblemAsProjectAction(input: unknown) {
       await initializeProjectWeeklyMilestones(project.id, tx, project.createdAt);
 
       return { team, project };
+    }, {
+      timeout: 30000, // Fixed 30s timeout to support Neon Serverless Postgres latency
     });
+
+    console.log("[DEBUG LOG] Onboarding Transaction Result:", JSON.stringify(result));
 
     try {
       const { logSystemEvent } = await import("@/lib/services/audit-service");
@@ -459,11 +518,25 @@ export async function selectProblemAsProjectAction(input: unknown) {
       success: true,
       message: `Successfully allocated Capstone Project: "${result.project.title}"!`,
     };
-  } catch (error) {
-    console.error("Failed to allocate project:", error);
+  } catch (error: any) {
+    console.error("[DEBUG LOG] Exception caught:", error);
+    if (error.stack) {
+      console.error(error.stack);
+    }
+    
+    // Determine the actionable error message
+    let errorMessage = "An error occurred while setting up your project team.";
+    if (error instanceof Error) {
+      if (error.message.includes("Expired transaction") || error.message.includes("expired transaction") || error.message.includes("timeout")) {
+        errorMessage = "Database constraint violation: Interactive transaction timed out. Please try again.";
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     return {
       success: false,
-      message: "An error occurred while setting up your project team.",
+      message: errorMessage,
     };
   }
 }

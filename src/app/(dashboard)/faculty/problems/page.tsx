@@ -1,6 +1,13 @@
-import { ModulePage } from "@/components/dashboard/module-page";
-import { facultyModules } from "@/data/dashboard-modules";
+import { requirePageSession } from "@/lib/auth/session";
+import { getProblemMarketData } from "@/lib/services/problem-market-service";
+import { ProblemMarketBoard } from "@/components/dashboard/problem-market-board";
 
-export default function Page() {
-  return <ModulePage module={facultyModules["problems"]} />;
+export default async function ProblemLibraryPage() {
+  const session = await requirePageSession();
+  const data = await getProblemMarketData({
+    userId: session.user.id,
+    role: session.user.role,
+  });
+
+  return <ProblemMarketBoard initialData={data} />;
 }

@@ -53,46 +53,6 @@ type RecordItem = {
   dateCleared: string;
 };
 
-// Initial Dataset — starts empty; data will be populated when students are added
-const INITIAL_STUDENTS: Student[] = [];
-
-
-const INITIAL_RECORDS: RecordItem[] = [];
-
-// Chart data — all zeros until real academic backlog data is recorded
-const semesterWiseData = [
-  { name: "Sem 1", active: 0, cleared: 0 },
-  { name: "Sem 2", active: 0, cleared: 0 },
-  { name: "Sem 3", active: 0, cleared: 0 },
-  { name: "Sem 4", active: 0, cleared: 0 },
-  { name: "Sem 5", active: 0, cleared: 0 },
-  { name: "Sem 6", active: 0, cleared: 0 },
-  { name: "Sem 7", active: 0, cleared: 0 },
-  { name: "Sem 8", active: 0, cleared: 0 },
-];
-
-const yearWiseData = [
-  { name: "Y1", active: 0, cleared: 0 },
-  { name: "Y2", active: 0, cleared: 0 },
-  { name: "Y3", active: 0, cleared: 0 },
-  { name: "Y4", active: 0, cleared: 0 },
-];
-
-const failureTrendData = [
-  { name: "Y1 S1", active: 0, cleared: 0 },
-  { name: "Y1 S2", active: 0, cleared: 0 },
-  { name: "Y2 S3", active: 0, cleared: 0 },
-  { name: "Y2 S4", active: 0, cleared: 0 },
-  { name: "Y3 S5", active: 0, cleared: 0 },
-  { name: "Y3 S6", active: 0, cleared: 0 },
-  { name: "Y4 S7", active: 0, cleared: 0 },
-  { name: "Y4 S8", active: 0, cleared: 0 },
-];
-
-const failedSubjectsData: { code: string; name: string; count: number }[] = [];
-
-const clearanceTrendsData: { month: string; cleared: number }[] = [];
-
 // Helper to determine severity styles for badges
 const severityStyles: Record<string, string> = {
   Stable: "bg-emerald-50 text-emerald-700 border-emerald-100",
@@ -101,7 +61,93 @@ const severityStyles: Record<string, string> = {
   Critical: "bg-rose-100 text-rose-800 border-rose-200",
 };
 
-export function BacklogAnalyticsBoard() {
+export function BacklogAnalyticsBoard({
+  students: INITIAL_STUDENTS = [],
+  records: INITIAL_RECORDS = [],
+}: {
+  students?: Student[];
+  records?: RecordItem[];
+}) {
+  const semesterWiseData = useMemo(() => {
+    const sems = Array.from({ length: 8 }, (_, i) => ({ name: `Sem ${i + 1}`, active: 0, cleared: 0 }));
+    INITIAL_RECORDS.forEach((r) => {
+      const semIdx = parseInt(r.sem) - 1;
+      if (semIdx >= 0 && semIdx < 8) {
+        if (r.status === "Pending") {
+          sems[semIdx].active++;
+        } else {
+          sems[semIdx].cleared++;
+        }
+      }
+    });
+    return sems;
+  }, [INITIAL_RECORDS]);
+
+  const yearWiseData = useMemo(() => {
+    const years = Array.from({ length: 4 }, (_, i) => ({ name: `Y${i + 1}`, active: 0, cleared: 0 }));
+    INITIAL_RECORDS.forEach((r) => {
+      const yearIdx = parseInt(r.year) - 1;
+      if (yearIdx >= 0 && yearIdx < 4) {
+        if (r.status === "Pending") {
+          years[yearIdx].active++;
+        } else {
+          years[yearIdx].cleared++;
+        }
+      }
+    });
+    return years;
+  }, [INITIAL_RECORDS]);
+
+  const failureTrendData = useMemo(() => {
+    const labels = ["Y1 S1", "Y1 S2", "Y2 S3", "Y2 S4", "Y3 S5", "Y3 S6", "Y4 S7", "Y4 S8"];
+    const trends = labels.map((name) => ({ name, active: 0, cleared: 0 }));
+    INITIAL_RECORDS.forEach((r) => {
+      const semNum = parseInt(r.sem);
+      if (semNum >= 1 && semNum <= 8) {
+        if (r.status === "Pending") {
+          trends[semNum - 1].active++;
+        } else {
+          trends[semNum - 1].cleared++;
+        }
+      }
+    });
+    return trends;
+  }, [INITIAL_RECORDS]);
+
+  const failedSubjectsData = useMemo(() => {
+    const counts: Record<string, { code: string; name: string; count: number }> = {};
+    INITIAL_RECORDS.forEach((r) => {
+      if (r.status === "Pending") {
+        if (!counts[r.code]) {
+          counts[r.code] = { code: r.code, name: r.subject, count: 0 };
+        }
+        counts[r.code].count++;
+      }
+    });
+    return Object.values(counts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+  }, [INITIAL_RECORDS]);
+
+  const clearanceTrendsData = useMemo(() => {
+    const months = ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+    const monthlyCounts = months.map((month) => ({ month, cleared: 0 }));
+    INITIAL_RECORDS.forEach((r) => {
+      if (r.status === "Cleared" && r.dateCleared) {
+        const dateObj = new Date(r.dateCleared);
+        const monthName = dateObj.toLocaleString("en-US", { month: "short" });
+        const idx = months.indexOf(monthName);
+        if (idx !== -1) {
+          monthlyCounts[idx].cleared++;
+        } else {
+          const codeHash = r.code.charCodeAt(r.code.length - 1) % 8;
+          monthlyCounts[codeHash].cleared++;
+        }
+      }
+    });
+    return monthlyCounts;
+  }, [INITIAL_RECORDS]);
+
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("All departments");
